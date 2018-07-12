@@ -1,0 +1,48 @@
+This is BibTeX, Version 0.99d (TeX Live 2017/Debian)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+The top-level auxiliary file: src/cfs_ms.aux
+The style file: pnas.bst
+Database file #1: master.bib
+Warning--there's a number but no volume in Carmel2010
+You've used 39 entries,
+            1837 wiz_defined-function locations,
+            760 strings with 10521 characters,
+and the built_in function-call counts, 8729 in all, are:
+= -- 693
+> -- 445
+< -- 3
++ -- 133
+- -- 94
+* -- 738
+:= -- 1330
+add.period$ -- 77
+call.type$ -- 39
+change.case$ -- 36
+chr.to.int$ -- 0
+cite$ -- 40
+duplicate$ -- 414
+empty$ -- 848
+format.name$ -- 94
+if$ -- 1953
+int.to.chr$ -- 0
+int.to.str$ -- 39
+missing$ -- 38
+newline$ -- 159
+num.names$ -- 43
+pop$ -- 54
+preamble$ -- 2
+purify$ -- 0
+quote$ -- 0
+skip$ -- 234
+stack$ -- 0
+substring$ -- 601
+swap$ -- 109
+text.length$ -- 3
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 1
+while$ -- 78
+width$ -- 41
+write$ -- 390
+(There was 1 warning)
