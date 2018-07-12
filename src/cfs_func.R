@@ -2552,8 +2552,8 @@ summarize_models <- function () {
   #
   #
   library(R.matlab)
-  m1 <- readMat("../preproc/cfs_phtdindiv_rw_logdcm2_allbounded.mat")
-  m2 <- readMat("../preproc/cfs_phtdindiv_trialswitch_logdcm2_allbounded.mat")
+  m1 <- readMat("../data/cfs_phtdindiv_rw_logdcm2_allbounded.mat")
+  m2 <- readMat("../data/cfs_phtdindiv_trialswitch_logdcm2_allbounded.mat")
   df1 <- data.frame(id=rep(unlist(m1$idlist), each=32),
                     trial=rep(c(1:32), 98),
                     model="RW",
@@ -2575,7 +2575,7 @@ summarize_models <- function () {
                     order=unlist(m2$Orders))
 
 
-  dff <- read.csv("../preproc/cfs_rwinput.csv")
+  dff <- read.csv("../data/cfs_rwinput.csv")
   dff <- subset(dff, select=c(id, trial, group,
                               meanperc, logdcm2))
   dff1 <- merge(dff, df1)
