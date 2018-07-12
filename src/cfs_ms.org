@@ -1,0 +1,1392 @@
+#+TITLE: *Affective flexibility without perceptual awareness*
+* Preamble                                                    :ignore:
+** General comments                                           :ignore:
+# ----------------------------------------------------------------------
+# - Turn on synonyms by starting synosaurus-mode
+# - Look up words using C-c sr
+# - Turn on dictionary by starting flyspell-mode
+# - Count words by section using org-wc-display
+# ----------------------------------------------------------------------
+** Specific comments for this manuscript                       :ignore:
+# ----------------------------------------------------------------------
+# Potential reviewers:
+# - Stephen Flemming
+# - Hakwan Lau
+# ----------------------------------------------------------------------
+** org specific settings                                        :ignore:
+# ----------------------------------------------------------------------
+#+OPTIONS: email:nil toc:nil num:nil author:nil date:t tex:t
+#+STARTUP: align fold
+#+SEQ_TODO: TODO(t) | DONE(d)
+#+TAGS: figure(f) check(c) noexport(n) ignore(i)
+#+LANGUAGE: en
+#+EXCLUDE_TAGS: noexport TODO
+#+DATE: {{{time(%Y-%m-%d %H:%M)}}}
+# ----------------------------------------------------------------------
+** Latex header                                                 :ignore:
+# ----------------------------------------------------------------------
+#+LATEX_CLASS:  myarticle
+#+LATEX_HEADER: \usepackage{graphicx}
+#+LATEX_HEADER: \usepackage{textcomp}
+#+LATEX_HEADER: \usepackage{setspace}
+#+LATEX_HEADER: \usepackage{amsmath}
+#+LATEX_HEADER: \usepackage{mathtools}
+# LATEX_HEADER: \usepackage{natbib}
+#+LATEX_HEADER: \usepackage{cite}
+#+LATEX_HEADER: \usepackage[labelfont=bf]{caption}
+#+LATEX_HEADER: \usepackage{times}
+# LATEX_HEADER: \renewcommand{\familydefault}{bch}
+#+LATEX_HEADER: \usepackage[T1]{fontenc}
+#+LATEX_HEADER: \graphicspath{{../output/figures/}{../lib/}}
+#+LATEX_HEADER: \topmargin 0.0cm
+#+LATEX_HEADER: \oddsidemargin 0.2cm
+#+LATEX_HEADER: \textwidth 16cm 
+#+LATEX_HEADER: \textheight 21cm
+#+LATEX_HEADER: \footskip 1.0cm
+#+LATEX_HEADER: \DeclarePairedDelimiterX{\infdivx}[2]{(}{)}{% 
+#+LATEX_HEADER:       #1\;\delimsize\|\;#2% 
+#+LATEX_HEADER: } 
+#+LATEX_HEADER: \newcommand{\infdiv}{D_{KL}\infdivx} 
+#+LATEX_HEADER: \DeclarePairedDelimiter{\norm}{\lVert}{\rVert}
+#+LATEX_HEADER: \newcommand\sumin{\sum_{i=1}^{n}}
+#+LATEX_HEADER: \newcommand{\Xoi}[1]{#1(i)}
+#+LATEX_HEADER: \newcommand{\frakPQ}[2]{\frac{\Xoi{#1}}{\Xoi{#2}}}
+#+LATEX_HEADER: \newcommand{\DKLPQ}[3]{D_{\mathrm{KL}}(#1 #3 #2)}
+# LATEX_HEADER: \usepackage{indentfirst}
+# ----------------------------------------------------------------------
+** Authors and affiliations                                     :ignore:
+# ----------------------------------------------------------------------
+#+LATEX_HEADER: \author{
+#+LATEX_HEADER: Philipp Homan,$^{1}$ 
+#+LATEX_HEADER: H. Lee Lau,$^{1}$ 
+#+LATEX_HEADER: Ifat Levy,$^{2}$
+#+LATEX_HEADER: Candace M. Raio,$^{3}$ 
+#+LATEX_HEADER: Dominik R. Bach,$^{4, 5}$\\ 
+#+LATEX_HEADER: David Carmel,$^{6\ast}$
+#+LATEX_HEADER: Daniela Schiller,$^{1\ast}$\\
+#+LATEX_HEADER: \\
+#+LATEX_HEADER: \normalsize{$^{1}$Department of Psychiatry,} 
+#+LATEX_HEADER: \normalsize{Department of Neuroscience, and }
+#+LATEX_HEADER: \normalsize{Friedman Brain Institute,}\\
+#+LATEX_HEADER: \normalsize{Icahn School of Medicine at Mount Sinai}\\
+#+LATEX_HEADER: \normalsize{1470 Madison Ave, NY, NY 10029, USA.}\\
+#+LATEX_HEADER: \normalsize{$^{2}$Departments of Comparative Medicine,} 
+#+LATEX_HEADER: \normalsize{Neuroscience and Psychology}\\
+#+LATEX_HEADER: \normalsize{Yale University,}
+#+LATEX_HEADER: \normalsize{New Haven, CT, USA.}\\
+#+LATEX_HEADER: \normalsize{$^{3}$Department of Psychology, } 
+#+LATEX_HEADER: \normalsize{New York University}\\
+#+LATEX_HEADER: \normalsize{6 Washington Place, NY, NY 10003, USA.}\\
+#+LATEX_HEADER: \normalsize{$^{4}$Clinical Psychiatry Research}\\
+#+LATEX_HEADER: \normalsize{Department of Psychiatry, Psychotherapy, } 
+#+LATEX_HEADER: \normalsize{and Psychosomatics}\\
+#+LATEX_HEADER: \normalsize{University of Zurich, Zurich, Switzerland}\\
+#+LATEX_HEADER: \normalsize{$^{5}$Wellcome Centre for Human Neuroimaging,}\\
+#+LATEX_HEADER: \normalsize{12 Queen Square, London WC1N 3BG, UK}\\
+#+LATEX_HEADER: \normalsize{$^{6}$Psychology Department, } 
+#+LATEX_HEADER: \normalsize{University of Edinburgh}\\
+#+LATEX_HEADER: \normalsize{7 George Square, Edinburgh EH8 9JZ, UK.}\\
+#+LATEX_HEADER: \\
+#+LATEX_HEADER: \normalsize{$^{\ast}$These authors contributed equally}\\ 
+#+LATEX_HEADER: \normalsize{$^{\ast}$Correspondence: daniela.schiller@mssm.edu}
+#+LATEX_HEADER: \normalsize{or dave.carmel@ed.ac.uk}\\
+#+LATEX_HEADER: \\
+# LATEX_HEADER: \normalsize{Word count: 595 + 1331 + 1083 + 922 words}
+#+LATEX_HEADER: }
+# -------------------------------------------------------------------------------
+** Buffer-wide source code blocks                               :ignore:
+# ----------------------------------------------------------------------
+# Set elisp variables need for nice formatting We want no new lines in
+# inline results and a paragraph size of 80 characters Important: this
+# has to be evaluated witch C-c C-c in order to work in the current
+# buffer
+#+BEGIN_SRC emacs-lisp :exports none :results silent
+
+; set timestamp format
+;(setq org-export-date-timestamp-format "%FT%T%z")
+(require 'org-wc)
+(flyspell-mode t)
+;(evil-declare-change-repeat 'company-complete)
+(setq synosaurus-choose-method 'popup)
+(synosaurus-mode t)
+(auto-complete-mode t)
+;(ac-config-default)
+;(add-to-list 'ac-modes 'org-mode)
+(linum-mode t)
+(whitespace-mode t)
+(setq org-babel-inline-result-wrap "%s")
+(setq org-export-with-broken-links "mark")
+(setq fill-column 72)
+(setq whitespace-line-column 72)
+;(setq org-latex-caption-above '(table image))
+(setq org-latex-caption-above nil)
+(org-toggle-link-display)
+; don't remove logfiles at export
+(setq org-latex-remove-logfiles nil)
+
+; Keybindings
+; (global-set-key (kbd "<f7> c") "#+CAPTION: ")
+(defun setfillcolumn72 ()
+	 (interactive)
+   (setq fill-column 72)
+	 )
+
+(defun setfillcolumn42 ()
+	 (interactive)
+   (setq fill-column 42)
+ )
+(define-key org-mode-map (kbd "C-c c #") "#+CAPTION: ")
+(define-key org-mode-map (kbd "C-c l #") "#+LATEX_HEADER: ")
+(define-key org-mode-map (kbd "C-c f c 4 2") 'setfillcolumn42)
+(define-key org-mode-map (kbd "C-c f c 7 2") 'setfillcolumn72)
+
+(setq org-odt-category-map-alist
+    '(("__Figure__" "*Figure*" "value" "Figure" org-odt--enumerable-image-p)))
+
+
+; let ess not ask for starting directory
+(setq ess-ask-for-ess-directory nil)
+
+;(setq org-latex-pdf-process '("latexmk -pdflatex='xelatex
+;-output-directory=../output/tex/ -interaction nonstopmode' -pdf
+;-bibtex -f %f"))
+(setq org-latex-logfiles-extensions 
+    (quote("bcf" "blg" "fdb_latexmk" "fls" 
+    "figlist" "idx" "log" "nav" "out" "ptc" 
+    "run.xml" "snm" "toc" "vrb" "xdv")))
+
+; deactivate link resolving
+(setq org-activate-links nil)
+
+
+#+END_SRC
+#
+#
+#
+# ----------------------------------------------------------------------
+** End preamble                                                 :ignore:
+# ----------------------------------------------------------------------
+# Start with doublespacing 
+
+\doublespacing
+\clearpage
+
+* Abstract
+** Code                                                       :ignore:
+#+HEADER: :exports none
+#+BEGIN_SRC R :colnames yes :results silent :session 
+source("../src/cfs_load.R")
+
+# Load results
+tabbinomsim <- read.csv("../output/tables/cfs_binomsim.csv")
+tabbic <- read.csv("../output/tables/cfs_bic.csv")
+tabnte <- read.csv("../output/tables/cfs_ntile_even.csv")
+tabint <- read.csv("../output/tables/cfs_interceptmodels.csv")
+
+# Custom functions
+parse_vals <- function(action, param) {
+switch(action,
+	pval={
+		if (param < 0.001) {
+       return("< 0.001")
+	  } else {
+       return(paste("=", round(param, 3)))
+		}
+	})
+}
+parse_msd <- function(m, sd) {
+  # Fill in pieces of mean and sd 
+  print(paste("M = ", round(m, 2), ", SD = ", round(sd, 2),  sep=""))
+}
+
+parse_tstat <- function(tstat) {
+  # Fill in pieces of t test as text
+  print(paste("/t/ (", round(tstat$parameter,2), ") = ",
+	      round(tstat$statistic, 2), ", /P/ ", parse_vals("pval", 
+        tstat$p.value), sep=""))
+}
+parse_rstat <- function(rstat) {
+  # Fill in pieces of pearson correlation as text
+  print(paste("/r/ (", round(rstat$parameter, 2), ") = ",
+	      round(rstat$estimate, 2), ", /P/ ", parse_vals("pval", 
+        rstat$p.value), sep=""))
+}
+parse_lsm <- function(lsm) {
+  # Fill in pieces of lsm contrast as text
+  print(paste("\\beta = ",
+	      round(lsm$estimate, 2), ", /t/ (", round(lsm$df, 2), ") = ", 
+        round(lsm$t.ratio, 2), ", /P/ ", 
+        parse_vals("pval", lsm$p.value), sep=""))
+}
+
+	cfs <- df %>% 
+  filter(trial==1) %>%
+  dplyr::select(id, manipulation, age, gender, fsq, stait, stais, meanur,
+                meanperc, meanresp, meanconf, meanconf_corr,
+								meanperceven, meanpercodd,
+                revindex, revindex_even, revindex_odd,
+                meanconf_incorr, meanconf_new) %>%
+  mutate(sex=as.numeric(gender)-1) %>% 
+  dplyr::select(-gender)
+
+
+# Custom variables
+n_partic_cfs <- sum(!is.na(cfs$id[cfs$manipulation=="CFS"]))
+n_partic_nocfs <- sum(!is.na(cfs$id[cfs$manipulation=="noCFS"]))
+k_binomsim <- 8
+p_binomsim <- tabbinomsim$p[k_binomsim]
+cfs_nmperc0 <- sum(cfs$meanperc==0)
+
+#+END_SRC
+** Text                                                       :ignore:
+Can we change our reactions to threat without being aware of it?
+Environmental cues that predict threat constantly change - new threats
+may arise while old ones cease to pose a risk. When consciously
+perceiving such cues, we are able to flexibly update and shift threat
+responses from one cue to another. Threat-conditioned stimuli that are
+perceived without awareness can still elicit physiological defensive
+reactions, but it remains unknown whether the complex learning involved
+in affective flexibility - creating new threat associations while
+suppressing old ones - can be accomplished without awareness. Here,
+participants underwent classical threat conditioning, in which one of
+two images was paired with an electric shock; halfway through the
+experiment, contingencies were reversed and the shock was paired with
+the other image. The images were presented under continuous flash
+suppression, a technique allowing suppression of stimuli from awareness
+for several seconds. Importantly, although the trial-by-trial
+effectiveness of suppression varied across participants, parametric and
+computational analyses show that this was independent of the reversal
+learning evident in physiological (skin conductance) responses:
+dynamic updating - shifting reactions from a stimulus that no
+longer predicts threat to one that now does - was accomplished
+regardless of individual levels of perceptual awareness. In addition,
+baseline anxiety levels scaled negatively with the strength of this
+updating, consistent with previous reports of heightened anxiety
+impeding learning. Our findings provide convincing evidence that the
+successful updating of acquired threat responses does not require
+perceptual awareness.
+	
+*Keywords*: fear conditioning; perceptual awareness; reversal learning;
+unconscious processing; anxiety; continuous flash suppression
+
+\clearpage
+
+* Significance statement
+In an ever-changing environment, survival depends on learning which
+stimuli represent threat, and on updating such associations when
+circumstances shift. This is a complex process: novel responses must be
+generated while simultaneously suppressing learned ones. The role of
+awareness in this affective flexibility remains unknown, and has major
+implications for theories of both learning and consciousness. Humans can
+acquire physiological responses to threat-associated stimuli even when
+they are unaware of them; but we don't know whether the task of updating
+such learning, previously shown only with awareness, can be accomplished
+without it. Here, we show that it can, and furthermore, that human
+physiological responses reflect changes in stimulus-threat pairings
+independently of stimulus awareness, demonstrating the sophistication of
+unconscious affective flexibility.
+
+\clearpage
+
+* Introduction
+** Text                                                        :ignore:
+Flexible responses to environmental threats are essential for adaptive
+behavior. This involves learning to respond to stimuli that signal
+threat, but also the ability to update such responses if environmental
+contingencies change - new threats may arise while old ones cease to
+pose a risk. It is well established that learned defensive responses can
+be updated when danger is consciously perceived
+[[cite:Morris2004,Schiller2008,Fleming2012]] - physiological reactions
+shift from a stimulus that no longer predicts danger to one that now
+does. But can we update our reaction to stimuli that predict danger when
+we are not even aware of them? Stimuli previously associated with an
+aversive outcome can elicit physiological arousal when they are
+suppressed from awareness
+[[cite:Critchley2002,Morris1998,Ohman1994,Whalen1998]], and new threat
+associations can be formed through classical conditioning even without
+any awareness of the conditioned stimuli
+[[cite:Katkin2001,Manns2002,Raio2012,Wiens2003]]; however, it remains
+unknown whether the complex process of updating threat learning requires
+awareness of the stimuli, or can be accomplished without it. Here we
+show that it can, and furthermore, that stimulus awareness does not seem
+to play a substantial role in such affective flexibility.
+
+To examine this, we employed the reversal paradigm, a laboratory model
+that requires flexible updating of threat contingencies
+[[cite:Schiller2008]]. In an initial acquisition phase, participants
+encounter two conditioned stimuli (CSs) and learn that only one of them
+predicts an electric shock. Halfway through the experiment, with no
+warning, these contingencies flip, initiating the reversal phase:
+Participants must flexibly learn that the formerly safe CS now predicts
+the shock and that the old one no longer does. To assess learning,
+participants' physiological arousal is recorded throughout the
+experiment, typically (and here) by measuring their skin conductance
+responses. Appropriate response reversal requires a sophisticated form
+of updating, in that one must learn to respond to a cue that now
+predicts threat while simultaneously inhibiting responses to the
+previously threatening cue that is now safe.
+
+To see whether reversal of conditioned threat requires awareness, we had
+a large group of participants (/N/ = src_R[:session]{n_partic_cfs})
+undergo reversal learning with the CSs suppressed from awareness by
+continuous flash suppression (CFS), a technique commonly used to examine
+unconscious perception
+[[cite:Raio2012,Tsuchiya2005,Stein2011,Carmel2010]]: The CSs were visual
+images presented monocularly, while the other eye was shown a
+high-contrast, dynamic image (the CFS mask) at the corresponding retinal
+location (See Figure [[figexp]] for a description of the design and
+procedure).
+
+CFS can suppress images from awareness for several seconds. However, it
+is also known that its effectiveness may vary across trials and
+individuals, and the suppressed stimulus may "break through" the
+suppression [[cite:Gayet2017]]. Over the last decade, a growing body of
+work has raised concerns that the standard approach - removing from
+analysis data (participants and trials) in which break trough had
+occurred - may bias the findings ([[cite:Shanks2016,Stein2014a]]; See
+Supplementary Methods for further details of these issues.) Here, we
+adopt a number of methodological approaches to ensure our results are
+robust to these potential concerns.
+
+Specifically, we remove no data and instead incorporate individual
+levels of reported stimulus awareness, as well as response patterns that
+might reflect residual awareness into a regression model accounting for
+physiological responses. The model also adjusts for baseline anxiety
+(which has been previously shown to correlate with unconscious learning;
+[[cite:Raio2012]]). Additionally, we use a Bayesian approach to
+establish that a model in which participants were updating their
+learning provides a better account for the findings than a model in
+which they were simply (and independently of the stimulus) predicting
+the probability of a shock on the next trial. Finally, to verify that
+reversal learning can be induced with awareness of our stimuli, we ran a
+no-CFS group (/N/ = src_R[:session]{n_partic_nocfs} {{{results(12)}}}),
+in which participants also viewed the CSs monocularly, but were aware of
+them as no CFS masks were presented to their other eye.
+
+We hypothesized that physiological responses to threat can be flexibly
+reversed without perceptual awareness. We find that CS awareness is
+indeed very weakly associated with reversal, and that there is strong
+evidence for the reversal of threat learning even in its complete
+absence.
+
+* Results and Discussion
+** Overall assessment of physiological reversal learning
+*** Code                                                      :ignore:
+#+HEADER: :exports none
+#+BEGIN_SRC R :colnames yes :results silent :session 
+dfm <- df %>% dplyr::select(id, manipulation, stage, spider,
+                            trial, ctrial, logdcm2) #%>%
+  #group_by(stage, spider, id)
+lmerfit <- lmer(scale(logdcm2) ~ manipulation * stage * spider + 
+                    scale(ctrial) + (1 + stage + spider|id), data=dfm)
+lsm <- lsmeans(lmerfit, c("manipulation", "stage", "spider"))
+ct1 <- contrast(lsm, list("CFS, Acq > Rev"=c(1, 0, -1, 0, -1, 0,  1, 0),
+                          "no-CFS, Acq > Rev"=c(0, 1, 0, -1, 0, -1,  0, 1),
+                          "CFS > no-CFS"=c(1, -1, -1, 1, -1, 1,  1, -1)))
+ct1df <- as.data.frame(summary(ct1))
+#+END_SRC
+
+*** Text                                                        :ignore:
+To assess the physiological arousal evoked by CSs, we used a model-based
+approach [[cite:Bach2010]] to estimate the amplitude of anticipatory
+sudomotor nerve activity (SNA) from skin conductance data recorded
+during stimulus presentation. A variational Bayes approximation was
+employed to invert a forward model that describes how hidden SNA
+translates into observable SCRs (see Materials and Methods). Previous
+work has shown that this approach is more sensitive than conventional
+SCR peak-to-peak analysis [[cite:Bach2010,Bach2014,Staib2015]]. Figure
+[[figtc]]A shows the time course of evoked SNA to Spiders A and B,
+separately for the CFS and no-CFS groups. In both groups, responses to
+Spider A relative to Spider B were larger during the acquisition phase
+and smaller during the reversal phase. To quantify the magnitude of
+physiological reversal learning, we calculated a reversal learning index
+for each participant (see Materials and Methods). The reversal learning
+index was positive (indicating successful reversal) and significantly
+greater than zero for both the CFS and no-CFS groups (Figure
+[[figtc]]B).
+
+Specifically, a linear mixed model (see Materials and Methods for
+details) revealed a significant interaction of stage and spider in both
+groups (CFS: src_R[:session]{parse_lsm(ct1df[1, ])} {{{results(\beta =
+0.27\, /t/ (2935) = 4.23\, /P/ = < 0.001)}}}; no-CFS:
+src_R[:session]{parse_lsm(ct1df[2, ])} {{{results(\beta = 1.23\, /t/
+(2935) = 7.29\, /P/ = < 0.001)}}}); the interaction was stronger in the
+no-CFS group than the CFS group (interaction of group, stage, and
+spider; src_R[:session]{parse_lsm(ct1df[3, ])} {{{results(\beta =
+-0.96\, /t/ (2935) = -5.35\, /P/ = < 0.001)}}}). Note that a significant
+interaction is formally equivalent to a significant reversal learning
+index. These results indicate that
+reversal learning was evident in both groups, and more pronounced in the
+no-CFS group.
+
+As previous work has found a negative association between anxiety and
+threat acquisition with and without awareness [[cite:Raio2012]], we also
+calculated correlations between the CFS group's baseline anxiety
+measures (STAIT, STAIS, FSQ) and the reversal learning index. Overall,
+reversal learning decreased significantly with increasing levels of
+state and trait anxiety, and to a lesser but non-significant extent for
+spider phobia (Figure [[figtc]]C).
+
+** Reversal learning and perceptual awareness
+*** Code                                                       :ignore:
+#+HEADER: :exports none
+#+BEGIN_SRC R :colnames yes :results silent :session 
+t1 <- t.test(meanresp ~ manipulation, data=cfs)
+t2 <- t.test(cfs$meanresp[cfs$manipulation=="CFS"]-1, mu=0.5)
+t3 <- t.test(meanconf ~ manipulation, data=cfs)
+t4 <- t.test(cfs$meanconf_corr[cfs$manipulation=="CFS"], mu=1)
+t5 <- t.test(meanperc ~ manipulation, data=cfs)
+t6 <- t.test(cfs$meanperc[cfs$manipulation=="CFS"], mu=0)
+m1 <- round(mean(cfs$meanresp[cfs$manipulation=="CFS"]-1), 2)
+s1 <- round(sd(cfs$meanresp[cfs$manipulation=="CFS"]-1), 2)
+m2 <- round(mean(cfs$meanresp[cfs$manipulation=="noCFS"]-1), 2)
+s2 <- round(sd(cfs$meanresp[cfs$manipulation=="noCFS"]-1), 2)
+m3 <- round(mean(cfs$meanconf[cfs$manipulation=="CFS"]), 2)
+s3 <- round(sd(cfs$meanconf[cfs$manipulation=="CFS"]), 2)
+m4 <- round(mean(cfs$meanconf[cfs$manipulation=="noCFS"]), 2)
+s4 <- round(sd(cfs$meanconf[cfs$manipulation=="noCFS"]), 2)
+m5 <- round(mean(cfs$meanperc[cfs$manipulation=="CFS"]), 2)
+s5 <- round(sd(cfs$meanperc[cfs$manipulation=="CFS"]), 2)
+m6 <- round(mean(cfs$meanperc[cfs$manipulation=="noCFS"]), 2)
+s6 <- round(sd(cfs$meanperc[cfs$manipulation=="noCFS"]), 2)
+r1 <- cor.test(cfs$meanperceven[cfs$manipulation=="CFS"], 
+               cfs$meanpercodd[cfs$manipulation=="CFS"])
+#+END_SRC
+
+*** Text                                                       :ignore:
+The CFS manipulation reduced awareness of the CSs; as expected, however,
+it was differentially effective in doing so across participants,
+precluding an overall conclusion that all learning under CFS happened
+non-consciously. The CFS group showed significantly lower accuracy in
+response to the "which seen?" question (src_R[:session]{parse_msd(m1,
+s1)} {{{results(Mean = 0.46\, SD = 0.29)}}}) compared to the no-CFS
+group (src_R[:session]{parse_msd(m2, s2)} {{{results(Mean = 0.86\, SD =
+0.16)}}}; src_R[:session]{parse_tstat(t1)} {{{results(/t/ (22.77) =
+-7.24\, /P/ < 0.001)}}}), and accuracy in the CFS group was not
+significantly different from the 50% random-response level
+(src_R[:session]{parse_tstat(t2)} {{{results(/t/ (85) = -1.21\, /P/ =
+0.229)}}}). The CFS group also showed lower confidence
+(src_R[:session]{parse_msd(m3, s3)} {{{results(Mean = 0.73\, SD =
+0.65)}}}) than the no-CFS group (src_R[:session]{parse_msd(m4, s4)}
+{{{results(Mean = 1.83\, SD = 0.08)}}}; src_R[:session]{parse_tstat(t3)}
+{{{results(/t/ (95.38) = -15.05\, /P/ < 0.001)}}}).
+
+However, group differences in accuracy and confidence, and even
+random-level response accuracy, are not sufficient to establish an
+absence of perceptual awareness in the CFS group. Notably, average
+confidence of correct responses in this group was low but significantly
+greater than the minimum value of 1 (src_R[:session]{parse_tstat(t4)}
+{{{results(/t/ (77) = 22.28\, /P/ < 0.001)}}}), suggesting that at least
+some participants were aware of some of the CSs; learning might thus
+have arisen from a subset of trials and/or participants where such
+awareness occurred. To address this, we quantified CS awareness by
+calculating an awareness index for each participant, ranging in possible
+values from 0 for no awareness to 1 for full awareness (see Materials
+and Methods). Although the awareness index of the CFS group
+(src_R[:session]{parse_msd(m5, s5)} {{{results(M = 0.28\, SD = 0.34)}}})
+was significantly lower than the no-CFS group's
+(src_R[:session]{parse_msd(m6, s6)} {{{results(Mean = 0.92\, SD =
+0.18)}}}; src_R[:session]{parse_tstat(t5)} {{{results(/t/ (23.93) =
+-10.19\, /P/ < 0.001)}}}), it was still significantly higher than zero
+(src_R[:session]{parse_tstat(t6)} {{{results(/t/ (85) = 7.59\, /P/ <
+0.001)}}}).
+
+Therefore, in order to test our main hypothesis that the reversal of
+acquired threat responses can be achieved without perceptual awareness,
+we characterized the quantitative relation between the level of
+awareness and the magnitude of reversal learning. To control for
+possible artifacts of regression to the mean (see Supplementary
+Methods), we first calculated the correlation between two independent
+estimates of the awareness index [[cite:Shanks2016]], one calculated
+from even-numbered trials, the other from odd-numbered trials. These
+measures were strongly correlated (src_R[:session]{parse_rstat(r1)}
+{{{results(/r/ (84) = 0.96\, /P/ < 0.001)}}}; Figure
+[[figregressions]]A); participants' awareness level in one set of trials
+was thus overwhelmingly predictive of their awareness in the other set,
+demonstrating the reliability of the awareness measure and indicating
+that an individual's overall awareness index was unlikely to have an
+extreme value that was due to measurement-level noise.
+
+Next, we examined the association between the reversal learning index
+and the awareness index, using values of both indices obtained
+separately from even (Figure [[figregressions]]B) and odd (Figure
+[[figregressions]]C) trials. As the color-coding of Figure
+[[figregressions]] shows, the relation between individual participants'
+reversal learning and their awareness was highly consistent across these
+separate measurements. In light of this, we pooled the data from all
+trials and regressed the reversal learning index on the perceptual
+awareness index (Figure [[figregressions]]D). The parameter of interest
+was the intercept, which corresponds to the magnitude of reversal
+learning at zero perceptual awareness. The intercept was positive and
+significantly different from zero, and furthermore, the awareness index
+regressor did not contribute significantly to prediction of reversal
+learning; importantly, this finding was even stronger in models that
+accounted for STAIT scores and a binary factor indicating whether
+participants were tracking the stimuli with their responses (see
+Materials and Methods; Figure [[figregressions]]E and Table
+[[tabint]]).
+
+** Comparing learning and expectation-based accounts
+Well-controlled lab-based conditioning procedures require strict
+constraints that preclude complete randomization of the number and order
+of different CSs; this comes with a cost: participants are able to
+develop expectations with above-chance validity, based on the sequence
+of trials so far, about the likelihood of a shock on any upcoming
+trial. Even without any awareness of the CSs, a participant should have
+been able to distinguish two types of trials: reinforced (with shock)
+and non-reinforced (no-shock). In a study with two CSs and a 100%
+reinforcement rate like ours, such expectations would correspond to an
+anticipated pattern of alternating trial-types (shock/no-shock or vice
+versa), with an increase in shock anticipation after every no-shock
+trial. The question, therefore, was whether the physiological responses
+we had measured might simply reflect participants' pattern-based
+anticipation of shock, rather than learning of the contingencies
+associated with the CSs.
+
+To answer this question, we used a Bayesian approach to compare the
+probability of our findings being accounted for by a classic
+Rescorla-Wagner learning model [[cite:Rescorla1972]] and a
+trial-sequence model. We hypothesized that successful threat reversal
+without perceptual awareness should be better explained by the
+Rescorla-Wagner learning model, whereas simple pattern-based expectation
+would be better explained by the trial-sequence learning model. We used
+maximum likelihood estimation to assess the log likelihood and calculate
+the Bayesian Information Criterion (BIC) of each model (See Materials
+and Methods for details of each model and calculation of the BIC). A
+smaller BIC indicates a better model, and BIC values can thus be
+compared by calculating the difference between them and interpreting the
+resulting \Delta BIC as providing evidence against the higher BIC. The
+Rescorla-Wagner model (BIC: 562.1) outperformed the pattern-based
+expectation model (BIC: 584.9), with the difference (\Delta BIC: 22.9)
+greater than 10, suggesting that the evidence against the trial
+switch model is very strong [[cite:Raftery1995]]. Repeating this
+comparison for just the participants with zero mean awareness confirmed
+the lower BIC for the Rescorla-Wagner model (BIC: 114.3) compared to the
+pattern-based expectation model (BIC: 125.7), with the difference again
+greater than 10 (\Delta BIC: 11.3; see also
+Figure S[[figmodelfits]]). This model comparison provides convincing
+evidence that a classical Rescorla-Wagner learning model explains our
+findings better than an alternative expectation-based model.
+
+** Discussion                                                  :ignore:
+These results indicate that participants were able to update their
+defensive physiological responses independently of their awareness of
+threat-related cues. Previous studies have shown that new threat
+associations can be formed without perceptual awareness of the
+conditioned stimuli
+[[cite:Manns2002,Wiens2003,Morris1998,Raio2012]]. However, until now it
+was unknown whether the far more complex process of threat reversal -
+shifting reactions from a stimulus that no longer predicts danger to one
+that now does - can be accomplished without awareness.  Our finding of
+reversal learning occurring independently of the level of perceptual
+awareness suggests that separate processes underlie affective
+flexibility and conscious processing [[cite:Lau2011]]. Conversely, the
+negative correlation between reversal learning and anxiety suggests that
+the various impairments caused by anxiety are not limited to systems
+underlying conscious processes.
+
+Previous studies have pointed out the limitations of using accuracy and
+confidence measures to assess perceptual awareness, and suggested
+remedies including the calculation of metacognitive sensitivity measures
+[[cite:Fleming2014]], Bayesian statistics [[cite:Dienes2015]], or
+parametric variation of the experimental manipulation
+[[cite:Schmidt2015]]. The present study addresses an issue not covered
+in previous discussions, by showing that a trial-wise analysis may
+reveal hints for incomplete suppression that analyses relying on average
+measures might easily miss. Future studies that rely on forced-choice
+questions for awareness assessment should thus examine response patterns
+across trials in addition to collecting aggregate measures. 
+
+The ability to reverse conditioned responses depends on the integrity of
+circuitry spanning several neural regions, particularly the ventromedial
+prefrontal cortex (vmPFC) and its connections with the
+amygdala[[cite:Morris2004]] where threat associations are formed
+[[cite:Roy2012]]. Consistent with this, it is known that patients with
+anxiety disorders often show rigid and inflexible threat responses in
+conjunction with prefrontal cortex dysfunction
+[[cite:Ressler2007,Rauch2006]]. Indeed, the real-life settings that
+people with anxiety disorders find challenging often require the
+updating and shifting of threat responses. Deficits in affective
+flexibility may thus explain the threat learning and extinction deficits
+seen in such disorders [[cite:Duits2015]]. Compared to healthy controls,
+patients are less able to distinguish between safe and unsafe stimuli in
+threat learning (when it is adaptive to do so), and distinguish between
+them to a greater extent during extinction (when it is
+non-adaptive). Threat learning without perceptual awareness is also
+negatively correlated with baseline state anxiety in healthy
+participants [[cite:Raio2012]]. Our new finding that baseline anxiety is
+negatively correlated with affective flexibility suggests a potential
+use for reversal learning as a model paradigm for investigating how
+anxiety modulates various processes in a variety of disorders,
+including, for example, posttraumatic stress disorder, in which there is
+an impairment of threat inhibition [[cite:Jovanovic2011]].
+
+* Materials and Methods
+** Participants
+Ninety-eight healthy participants (mean age = 29.97; range 18-65) were
+assigned to one of the two groups: reversal learning with CFS (CFS
+group; /N/ = 86, 48 female) or without CFS (no-CFS group; /N/ = 12, 5
+female). Assignment was random until each group reached a size of 12;
+subsequent participants were assigned to the CFS group. Measures of
+trait and state anxiety (Spielberger Trait-State Anxiety Inventory
+[[cite:Spielberger1983]]; STAIT and STAIS, respectively) and spider
+phobia (Fear of Spider Questionnaire; FSQ [[cite:Szymanski1995]]) were
+taken prior to participation and did not differ between the groups
+(Table S[[tabsample]]). The experiment was approved by the Institutional
+Review Board of the Icahn School of Medicine at Mount Sinai. All
+participants provided written informed consent and were financially
+compensated for their participation.
+
+** Experimental procedure
+Participants viewed the stimuli monocularly, through a mirror
+stereoscope (StereoAids, Australia) placed at a distance of 45 cm from a
+17-inch Dell monitor. The CSs (schematic low-contrast images of
+spiders), presented to the left eye only, were suppressed from awareness
+in the CFS group: while the left eye saw them, the right eye was
+presented with "Mondrians" - arrays of high contrast, multi-colored,
+randomly generated rectangles alternating at 10 Hz. Both the CSs and the
+CFS masks were flanked by identical textured black and white bars, to
+facilitate stable ocular vergence. The no-CFS group viewed identical CSs
+(also presented monocularly), but with no Mondrians presented to the
+other eye.
+
+The experiment consisted of 16 acquisition trials followed by 16
+reversal trials. One of two spider images was presented on each
+trial. During acquisition, spider A always terminated with a shock and
+spider B never did. Reversal occurred halfway through the experiment:
+spider B now terminated with a shock and spider A did not. The spider
+stimuli were presented for 6 s each in pseudorandomized order. One of
+four possible trial orders was used for each participant. Orders were
+generated by imposing specific constraints on the trial order, such that
+the first trial was always reinforced and no more than two of the same
+trial type ever occurred consecutively.
+
+Trial order and spider identity were counterbalanced across
+participants. To assess the effectiveness of the awareness
+manipulation [[cite:Merikle2001]], 1 s after the offset of every CS
+participants were shown the question "Which seen?" (1 = flower, 2 =
+spider; notably, flowers were never shown, meaning the question
+addressed detection rather than discrimination as it could be answered
+correctly even with a brief glimpse). This was followed by the question
+"How confident?" (1 = guess to 3 = sure; participants were instructed to
+indicate how confident they were of the flower/spider answer they had
+just given). Both questions were presented binocularly (1.5 - 2 s each,
+during which responses had to be given by pressing number keys on a
+standard keyboard). The second question was followed by an 8 to 10 s
+inter-trial interval.
+
+** Psychophysiological stimulation and measurement
+Mild electric shocks were delivered using a Grass Medical Instruments
+SD9 stimulator and stimulating bar electrode attached to the
+participant's right wrist. Shocks (200ms; 50pulse/s) were delivered at a
+level determined individually by each participant as "uncomfortable but
+not painful" (maximum of 60V), during a work-up procedure prior to the
+experiment.  
+
+Skin conductance responses (SCR) were measured with Ag-AgCl electrodes,
+filled with standard isotonic NaCl electrolyte gel, and attached to the
+middle phalanges of the second and third fingers of the left hand. SCR
+signals were sampled continuously at a rate of 200 Hz, amplified and
+recorded with a MP150 BIOPAC Systems skin conductance module connected
+to a PC.
+
+** Analysis of physiological responses
+*** Model-based analysis 
+We estimated SNA from SCR data with a model-based variational Bayes
+approximation [[cite:Bach2010]], inverting a forward model that
+describes how (hidden) SNA translates into (observable) SCR. A unit
+increase in SNA corresponds to an increase in SCR of 1 micro
+Siemens. The model assumes that the observed SCR can be decomposed into
+different components including anticipation, evocation, and spontaneous
+fluctuations, each of which are generated by bursts of SNA driven by
+changes in sympathetic arousal. The generative (forward) model thus
+describes how sympathetic arousal, the physiological measure that is
+taken as an index of the psychological process of threat, translates
+into sudomotor nerve bursts which then generate the observable SCR
+[[cite:Bach2010]]. Using Bayesian inference, the forward model can then
+be reversed in order to estimate the most likely underlying SNA given
+the observed SCR:
+
+\begin{equation}
+p(\theta|y) = \frac{p(\theta)p(y|\theta)}{p(y)},
+\end{equation}
+#
+where the most likely parameter vector \theta (corresponding to the SNA)
+given the observed outcome $y$ (corresponding to the SCR) is given by
+the prior estimate of \theta weighted by the likelihood of $y$ given
+\theta. Solving this equation involves integration over the model
+evidence p(y) which is analytically hard to compute (and possibly
+intractable). This can be resolved by replacing this integration problem
+by an optimization problem, which can be approximated with Variational
+Bayes procedures [[cite:Friston2006a]], where the log of the model
+evidence can be framed as the sum of the Kullback-Leibler divergence and
+the Free Energy. By maximizing the Free Energy the Kullback-Leibler
+divergence is minimized, and a lower bound to the log model evidence can
+be derived iteratively.
+
+The SNA estimates were computed using previously developed software
+package PsPM [[cite:Bach2010]] implemented in MATLAB R2016b (The
+Mathworks Inc, Natick, MA, USA). The statistical analyses were conducted
+with the R software [[cite:R-Core-Team2016]]
+(src_R[:session]{version$version.string} {{{results(R version 3.4.2
+(2017-09-28))}}}) and the libraries lme4 [[cite:Bates2005]] and lsmeans
+[[cite:Lenth2016]]. Welch's t-tests were used instead of two sample
+t-tests when groups had unequal variances.
+
+*** Reversal Learning Index 
+An estimate of SNA was obtained for each trial. We expected Spider A to
+evoke greater SNA than Spider B during the acquisition phase, and Spider
+B to evoke greater SNA than Spider A during the reversal phase. The
+strength of reversal learning can thus be quantified by calculating,
+separately for the acquisition and reversal phases, the difference
+between the average SNA evoked by each spider. To quantify the degree of
+reversal (which is formally equivalent to the interaction of phase and
+stimulus), the reversal learning index was calculated by subtracting the
+difference between mean SNAs evoked by each spider during reversal from
+the difference during acquisition (the larger the index, the greater the
+magnitude of reversal learning):
+
+\begin{equation}
+\begin{aligned}
+  \text{Reversal learning index} &= \Delta \text{Acquisition} - \Delta \text{Reversal} \\
+ \Delta \text{Acquisition} &= [\text{mean(Spider A)} - \text{mean(Spider B)}]_{\mathrm{Acquisition}} \\
+    \Delta \text{Reversal} &= [\text{mean(Spider A)} - \text{mean(Spider B)}]_{\mathrm{Reversal}} 
+\end{aligned}
+\end{equation}
+To formally test for group differences in the strength of reversal
+learning, we computed a linear mixed model using the lme4 library in
+R. We used the skin conductance response (converted to a model-based
+measure of sudomotor nerve activity, SNA) as the dependent variable and
+entered group (CFS, no-CFS), stage (acquisition, reversal), and spider
+(spider A, spider B) as well as a continuous variable for trial (to
+account for habituation) as predictors. The random structure of the
+model included an intercept and slopes for stage and spider.
+
+** Assessments of perceptual awareness
+*** Perceptual awareness index 
+To characterize participants' reported awareness of CSs, each trial was
+assigned a perceptual awareness score, defined by a combination of
+detection and confidence responses: Correct answers with a confidence
+rating of 1 (guess) and incorrect answers irrespective of confidence
+were assigned an awareness score of 0; correct answers with a confidence
+rating of 2 (medium) were assigned a score of 0.5, and correct answers
+with a confidence rating of 3 (high) were assigned an awareness score
+of 1. A perceptual awareness index was calculated for each participant
+by averaging awareness scores across all trials.
+
+*** Stimulus-response association patterns ("tracking") 
+We also assessed response patterns across trials, to see whether
+participants were able to track stimuli with their responses, accurately
+discriminating the images despite not being able to label them. We
+plotted individual trial-by-trial responses to the question "Which
+seen?", overlaid on the trial-by-trial presentation of spiders (spider
+A, spider B; Figure S[[figbinomsim]]A). We then calculated the number of
+consecutive "hits", defined as the number of consecutive trials where
+these two time-courses were either identical or consistently in
+opposition, suggesting that there was a possible association between the
+stimulus and the response during those trials. The probability of such
+consecutive hits occurring by chance alone can be derived as follows:
+
+Let $p = 0.5$ be the probability of a hit, $k$ the number of consecutive
+hits, $n$ the number of trials left, $i$ the number of consecutive hits
+already observed; the chance of observing $k$ consecutive hits for the
+remaining $n$ trials can then be formulated as a recursive problem:
+\begin{align}
+f_{p, k}(i, n) = pf_{p, k}(i + 1, n - 1) + (1 - p) f_{p, k}(0, n-1),
+\end{align}
+which can be solved analytically with dynamic programming or recursion.
+Trivially, $f_{p, k}(k, n) = 1$ for $n \geq 0$ since $k$ consecutive
+hits have already been observed, and $f_{p, k}(i, n) = 0$ for $k - i >
+n$ since there are not enough trials left to observe $k$ consecutive
+hits.  
+
+For example, assuming we want to know how likely it is to observe $k =
+8$ consecutive hits within $n = 32$ trials given $p = 0.5$, i.e.,
+$f_{0.5, 8}(0, 32)$, we find that this yields a probability of 0.050.
+
+Alternatively, the probability can be derived by simulation for all
+possible numbers of consecutive hits within 32 trials (i.e., from 1 to
+31). For each possible number, we thus also simulated 10^5 draws of a
+binomial distribution and calculated the average probability of that
+number of hits being consecutive. As can be seen in Figure
+S[[figbinomsim]]B, the result for 8 consecutive hits
+(src_R[:session]{p_binomsim}) was very close to the analytical
+solution. Fifteen participants showed evidence of tracking the spiders
+or the shocks with their responses (8 or more consecutive hits);
+notably, 3 of these participants appeared to have a perceptual awareness
+index of zero. We thus adjusted our subsequent analysis with an
+additional binary covariate, indicating whether participants did or did
+not show 8 or more consecutive hits.
+
+** Comparing learning and expectation-based models
+The Rescorla-Wagner model [[cite:Rescorla1972]] describes how the
+prediction for each trial is updated according to a prediction error and
+learning rate:
+
+\begin{equation}
+\begin{aligned}
+V_{n+1}(x_{n}) &= V_{n}(x_{n}) + \alpha \delta_{n} \\
+\delta_{n} &= r_{n} - V_{n}(x_{n}), \\
+\end{aligned}
+\end{equation}
+#
+where $x_{n}$ is the conditioned stimulus on trial $n$ (Spider A or
+Spider B), and \delta_{n} is the punishment prediction error that
+measures the difference between the expected and the actual shock
+($r_{n}$) on trial $n$. The learning rate \alpha for the value update is
+a constant free parameter. The value for the CS not observed on trial
+$n$ remains unchanged. To derive the best fits for the Rescorla-Wagner
+model, we assumed that $V_{0} = 0.5$, reflecting the assumption that
+getting a shock or not was equally likely for the first trial.
+
+For the alternative trial-sequence learning model, we assumed that a
+participant expecting a strict sequence of alternating trial types
+(shock/no shock or vice versa) would update this expectation according
+to the actually encountered trial types and a constant learning rate:
+
+\begin{equation}
+\begin{aligned}
+V'_{n+1} &= V'_{n} + \alpha' \delta'_{n} \\
+\delta'_{n} &= r'_{n} - V'_{n} \\
+\tau_{n} &= \lvert (r'_{n-1} - 1) \rvert, \\
+\end{aligned}
+\end{equation}
+#
+where $V'_{n+1}$ is the expected trial type switch at trial $n+1$ (if
+$V'_{n+1}$ is larger than 0.5, a trial switch is expected), $\alpha'$ is
+the learning rate, and $\delta'_{n}$ is the prediction error. The
+prediction error corresponds to the difference between the actual trial
+type switch for trial $n$ ($r'_{n}$; coded as one for a trial type
+switch and zero for an equal trial type) and the expectation for trial
+n. A changing trial type for trial n was tracked by $\tau_{n}$, which
+was one if the preceding trial was zero and zero if the preceding trial
+type was one. To map these expectations onto expected values, we assumed
+that
+
+\begin{equation}
+\begin{aligned}
+V_{n+1} &= 
+\begin{cases}
+V'_{n+1} \cdot \tau_{n} + (1 - V'_{n+1}) (1 - \tau_{n}), & \text{if } V' > 0.5 \\
+V'_{n+1},                              & \text{otherwise},  
+\end{cases}
+\end{aligned}
+\end{equation}
+#
+where the expected value for trial $n+1$ was calculated according to
+whether a trial type switch was expected ($V' > 0.5$) or not.  
+
+We performed a formal model comparison between the conventional
+Rescorla-Wagner model and the trial switch model for our data set
+(Figure S[[figmodelfits]]), using maximum likelihood estimation and
+non-linear optimization (implemented with the fmincon function in MATLAB
+R2016b (The Mathworks Inc, Natick, MA, USA). Using the log likelihood,
+we calculated the Bayesian Information Criterion (BIC) to compare the
+two models as follows:
+
+\begin{equation}
+\begin{aligned}
+\text{BIC} = \text{log}(n)\,k - 2 \cdot \text{log}(\hat{L}),
+\end{aligned}
+\end{equation}
+#
+where $n$ is the number of data points, $k$ is the number of regressors,
+and $\hat{L}$ is the maximized value of the likelihood function.
+ 
+* Acknowledgments
+All authors declare no conflicts of interest with regard to the current
+study. We thank Patrik Vuilleumier who created and shared the spider
+stimuli. This work was supported in part through the computational
+resources and staff expertise provided by Scientific Computing at the
+Icahn School of Medicine at Mount Sinai.  Funding was provided by NIMH
+grant MH105515 and a Klingenstein-Simons Fellowship Award in the
+Neurosciences to D.S.; ERC Advanced Grant XSPECT-DLV-692739 to D.C.
+(Co-I); and Swiss National Science Foundation grant SNF 161077 to
+P.H. The funding source had no role in the design and conduct of the
+study; collection, management, analysis, and interpretation of the data;
+preparation, review, or approval of the manuscript; and decision to
+submit the manuscript for publication.
+
+\clearpage
+
+* References                                                  :ignore:
+\bibliographystyle{pnas}
+\bibliography{master}
+
+\clearpage
+\singlespace
+
+* Tables and Figures
+# go back to single space for Tables and Figures
+\singlespacing
+
+** STable. Intercept models                                    :ignore:
+# go back to single space for Tables and Figures
+#+NAME: srctabint
+#+HEADER: :exports results 
+#+BEGIN_SRC R :results value :colnames yes :session :cache no 
+tabintr <- tabint[1:9, ] %>% 
+   mutate(model=c(rep(1, 2), rep(2, 3), rep(3, 4)))
+tabintr$X <- as.character(tabintr$X)
+tabintr[, 2:4] <- round(tabintr[, 2:4], 1)
+tabintr[, 5] <- round(tabintr[, 5], 3)
+
+# Reorder cols
+tabintr <- tabintr[, c(6, 1, 2, 3, 4, 5)]
+
+colnames(tabintr) <- c("*Model*", "*Predictor*", "*Beta*", 
+                       "*SE*", "*/t/*", "*/P/*")
+tabintr[1:9, 2] <- c("Intercept", "Awareness index", 
+                  "Intercept", "STAIT", "Awareness index", 
+                  "Intercept", "STAIT", "Tracking score", "Awareness index") 
+
+return(tabintr)
+#+END_SRC
+
+
+#+ATTR_LATEX: center:nil
+#+ATTR_LATEX: \tiny
+#+CAPTION: *Regression coefficients for all awareness index models.*
+#+CAPTION: Reversal learning was the dependent variable in all models. 
+#+CAPTION: Model 1 included an intercept
+#+CAPTION: and the perceptual awareness index;
+#+CAPTION: model 2 additionally included STAIT 
+#+CAPTION: scores; model 3 additionally included
+#+CAPTION: STAIT and tracking scores.
+#+NAME: tabint
+#+RESULTS[6997f58c8225bfba4b5c193fdfb71ec02e66c956]: srctabint
+| *Predictor*     | *Beta* | *SE* | */t/* | */P/* | *Model* |
+|-----------------+--------+------+-------+-------+---------|
+| Intercept       |    0.3 |  0.2 |   2.1 | 0.035 |       1 |
+| Awareness index |   -0.1 |  0.4 |  -0.4 | 0.692 |       1 |
+| Intercept       |    1.4 |  0.5 |     3 | 0.004 |       2 |
+| STAIT           |      0 |    0 |  -2.3 | 0.024 |       2 |
+| Awareness index |   -0.2 |  0.4 |  -0.5 | 0.596 |       2 |
+| Intercept       |    1.5 |  0.5 |   3.1 | 0.003 |       3 |
+| STAIT           |      0 |    0 |  -2.4 | 0.021 |       3 |
+| Tracking score  |   -0.3 |  0.3 |    -1 | 0.318 |       3 |
+| Awareness index |   -0.2 |  0.4 |  -0.5 | 0.597 |       3 |
+
+\clearpage
+
+** Figure. Experimental design                                 :ignore:
+#+NAME: cropfigexp
+#+BEGIN_SRC sh :exports results :results silent
+# if [ ! -f ../output/figures/cfs_revtask-crop.pdf]; then 
+    pdfcrop ../output/figures/cfs_revtask.pdf
+# fi 
+#+END_SRC
+#+NAME: figexp
+#+CAPTION: *Experimental design and procedure.*
+#+CAPTION: In each trial of the acquisition phase,
+#+CAPTION: participants were presented with one of
+#+CAPTION: two stimuli (schematic pictures of
+#+CAPTION: spiders, presented monocularly for 6 sec
+#+CAPTION: and suppressed from awareness by a CFS
+#+CAPTION: mask shown to the other eye). One image
+#+CAPTION: (spider A) always terminated with a mild
+#+CAPTION: electric shock to the wrist, whereas the
+#+CAPTION: other (spider B) never did. Halfway
+#+CAPTION: through the experiment, with no warning,
+#+CAPTION: the contingencies flipped and the reversal
+#+CAPTION: phase began: the formerly safe stimulus
+#+CAPTION: (spider B) now predicted the shock, and
+#+CAPTION: the old threat-associated one (spider
+#+CAPTION: A) was now safe. Each spider was shown 8
+#+CAPTION: times in each phase. Trial order was
+#+CAPTION: pseudorandomized (see Materials and
+#+CAPTION: Methods) and spider identity (A and B) was
+#+CAPTION: counterbalanced across participants. To
+#+CAPTION: assess the success of the awareness
+#+CAPTION: manipulation, participants answered the
+#+CAPTION: questions "Which seen?" (1=flower,
+#+CAPTION: 2=spider) and "How confident?" (1=guess to
+#+CAPTION: 3=sure), presented binocularly (1.5 - 2 s each),
+#+CAPTION: beginning 1 s after the offset of every
+#+CAPTION: CS, and followed by an 8-10 s inter-trial
+#+CAPTION: interval. Participants who underwent the
+#+CAPTION: same procedure without CFS were shown
+#+CAPTION: identical CSs, but the CFS mask was
+#+CAPTION: absent.
+#+ATTR_LATEX: :width 0.9\textwidth
+[[file:cfs_revtask.pdf]]
+
+\clearpage
+
+** Figure. Time courses                                        :ignore:
+#+NAME: cropfigtc
+#+BEGIN_SRC sh :exports results :results silent
+    pdfcrop ../output/figures/cfs_timecourses.pdf
+#+END_SRC
+
+#+CAPTION: *Physiological reversal*
+#+CAPTION: *learning.* *A. Time courses reveal reversal*
+#+CAPTION: *of threat responses with and without*
+#+CAPTION: *continuous flash suppression.* Data points
+#+CAPTION: represent trial-wise mean responses to
+#+CAPTION: spider A (the CS+ during acquisition) and spider B
+#+CAPTION: (the CS- during acquisition). Both groups showed evidence
+#+CAPTION: for reversal learning as indicated by the
+#+CAPTION: interaction of stage (acquisition,
+#+CAPTION: reversal) and stimulus (spider A, spider
+#+CAPTION: B) and quantified by the reversal index.
+#+CAPTION: Error bars represent standard
+#+CAPTION: errors. *B. Mean reversal learning index*
+#+CAPTION: *for each group.* Error bars represent 
+#+CAPTION: 95% confidence intervals,
+#+CAPTION: indicating that the interaction of stage
+#+CAPTION: and stimulus and thus the magnitude of reversal
+#+CAPTION: learning in both groups was significantly
+#+CAPTION: greater than zero. *C. Heightened anxiety*
+#+CAPTION: *is associated with impaired reversal*
+#+CAPTION: *learning under CFS.* A negative
+#+CAPTION: correlation between baseline anxiety
+#+CAPTION: measures and the strength of threat
+#+CAPTION: reversal learning is evident for state and
+#+CAPTION: trait anxiety. Blue lines show linear
+#+CAPTION: fits of each score to the reversal index,
+#+CAPTION: and ribbons around lines indicate bootstrapped
+#+CAPTION: 95% confidence intervals around the estimate.
+#+CAPTION: Abbreviations:
+#+CAPTION: STAIS/STAIT, state/trait anxiety
+#+CAPTION: subscale of the Spielberger State-Trait
+#+CAPTION: Anxiety Inventory; FSQ, Fear of Spider
+#+CAPTION: Questionnaire, ~, /P/ < .1; *, /P/ < .05.
+#+NAME: figtc
+#+ATTR_LATEX: :width 1.0\textwidth 
+[[file:cfs_timecourses-crop.pdf]]
+
+\clearpage
+
+** Figure. Regressions                                         :ignore:
+#+NAME: cropfigregressions
+#+BEGIN_SRC sh :exports results :results silent
+    pdfcrop ../output/figures/cfs_regressions.pdf
+#+END_SRC
+
+#+CAPTION: *Characterizing the relation between*
+#+CAPTION: *perceptual awareness and reversal*
+#+CAPTION: *learning.* *A. Correlation between the*
+#+CAPTION: *awareness index of even and odd-numbered*
+#+CAPTION: *trials.* Each data point represents an
+#+CAPTION: individual participant. The strong
+#+CAPTION: positive correlation between these
+#+CAPTION: independent measures of awareness
+#+CAPTION: demonstrates that individual participants'
+#+CAPTION: awareness ratings - even those with
+#+CAPTION: extreme values of zero or one - are
+#+CAPTION: unlikely to be due to measurement
+#+CAPTION: noise. For illustrative purposes, 
+#+CAPTION: the color scheme marks all
+#+CAPTION: participants with an awareness index of 0
+#+CAPTION: in even trials in red (UA, 
+#+CAPTION: unaware, /N/ = src_R[:session]{tabnte$snte[1]}) and
+#+CAPTION: classifies the rest of the sample in 3
+#+CAPTION: tertiles (T1-T3). Note that some data
+#+CAPTION: points overlap. *B.* *Reversal learning*
+#+CAPTION: *plotted against perceptual awareness for*
+#+CAPTION: *individual participants, for data obtained*
+#+CAPTION: *from even-numbered trials.* The color
+#+CAPTION: scheme is the same as in Panel A. 
+#+CAPTION: *C.* *Reversal learning plotted against*
+#+CAPTION: *perceptual awareness for individual*
+#+CAPTION: *participants, for data obtained from*
+#+CAPTION: *odd-numbered trials.* Individual
+#+CAPTION: participants are marked with the same
+#+CAPTION: color as in the previous panels; the
+#+CAPTION: overall distribution of participants is
+#+CAPTION: highly similar across panels. *D.* *Reversal*
+#+CAPTION: *learning as a function of perceptual*
+#+CAPTION: *awareness, using data pooled from all*
+#+CAPTION: *trials.* The intercept, indicating the
+#+CAPTION: magnitude of reversal learning in the
+#+CAPTION: absence of awareness, is positive and
+#+CAPTION: significantly different from
+#+CAPTION: zero. *E.* *Intercepts and their 95% confidence*
+#+CAPTION: *intervals in a series of regression*
+#+CAPTION: *models.* Reversal learning is predicted by
+#+CAPTION: the perceptual awareness index (model 1), the
+#+CAPTION: perceptual awareness index and STAIT
+#+CAPTION: scores (model 2), and perceptual awareness,
+#+CAPTION: STAIT and tracking scores
+#+CAPTION: (model 3). (Excluding the potential outlier
+#+CAPTION: in the top left corner of panel D weakens
+#+CAPTION: significance of the intercept in model
+#+CAPTION: 1, /P/ =
+#+CAPTION: 0.07; the intercepts 
+#+CAPTION: of model 2 and 3 remain significant after
+#+CAPTION: removal of this outlier).
+#+CAPTION: Blue lines show linear fits, and ribbons 
+#+CAPTION: around lines indicate bootstrapped 95% 
+#+CAPTION: confidence intervals around the estimate. 
+#+NAME: figregressions
+#+ATTR_LATEX: :width 1.0\textwidth 
+[[file:cfs_regressions-crop.pdf]]
+
+\clearpage
+
+* Supplementary Information
+\doublespacing
+\setcounter{figure}{0}
+\setcounter{table}{0}
+
+** Supplementary Methods
+Investigating unconscious perception relies on the effectiveness of the
+technique used to suppress stimuli from awareness. Although CFS is
+highly effective, it is not foolproof - different observers are not
+equally susceptible to it, and stimuli often break through the
+suppression. The standard approach to dealing with breakthrough of the
+suppressed stimulus is to remove from analysis those trials and
+individuals in which it occurred. This approach is problematic, though,
+as it may lead to various artifacts. Below we detail the concerns that
+are addressed by the analysis approach we adopted in the present study.
+
+*** Regression to the mean
+Recent computational work suggests that findings in the trials
+that remain after removing suppression failures (unless the number of
+such trials is negligibly small) could be the result of regression to
+the mean [[cite:Shanks2016]]: If two noisy measures of the same
+underlying phenomenon are used (e.g., behavioral and skin conductance
+responses may both measure conscious processing, each with its own,
+independent measurement noise), then selecting only the extreme cases of
+one measure (e.g., only those cases where behavior indicates complete
+absence of awareness) is unlikely to yield similarly extreme results for
+the other measure (e.g., it is unlikely that the skin conductance
+responses will also be close to zero). Thus, a result that looks as if
+it indicates unconscious processing would in fact be an artifact that is
+entirely due to regression to the mean.
+
+To address this issue, we refrain from removing trials or participants
+with breakthrough. Instead, we include all of them in our analyses and
+assess CS awareness in a continuous manner by assigning each participant
+an awareness rating; we base this rating on two independent measures of
+awareness (odd and even-numbered trials), as proposed by Shanks
+[[cite:Shanks2016]] to control for regression to the mean in awareness
+estimates. We then examine the association between the level of CS
+awareness and the amount of reversal learning indicated by physiological
+stimulus-evoked responses (Figure S[[figbinomsim]]).
+
+*** Sensitivity of awareness assessments
+The tasks used to assess whether participants were aware of the
+suppressed stimulus (typically through examining, after each trial,
+whether they can confidently and accurately report which stimulus was
+presented) may not be sensitive enough to detect such awareness. This is
+because breakthrough, leading to at least some awareness, may not always
+reach a level that allows above-chance performance on the chosen
+discrimination task (e.g., one might be able to distinguish between two
+stimuli without being able to label either, a problem that falls within
+the general concern of "sensitivity dissociation" between direct and
+indirect measures; [[cite:Stein2014a]]).
+
+To address this issue, we analyze individual participants' response
+patterns across trials, searching for any link between stimuli and
+behavioral responses - including consistently wrong ones - that may
+indicate potential tracking of the stimuli, suggesting some perceptual
+awareness (even in the absence of an explicit ability to identify the
+images) and thus possibly accounting for physiological findings. We
+incorporate a binary factor indicating whether or not tracking behavior
+was observed in each participant into the regression model accounting
+for physiological responses.
+
+*** Participants expectations
+Laboratory models of conditioning require a pre-defined number of trials
+for each CS category, to avoid confounding learning with exposure to
+different stimulus ratios. Furthermore, the order of trials is often not
+completely random but constrained to allow for roughly similar
+distributions of CSs across the experiment
+[[cite:Schiller2008,Li2011]]. This means that participants would not be
+wrong to predict the probability of receiving aversive stimulation on a
+given trial using a heuristic that takes into account the overall rate
+of the aversive stimulus and the number of trials since its last
+occurrence (this is akin to the gambler's fallacy, but in such cases has
+a higher-than-chance success rate). The likelihood of participants
+basing their anticipation of a shock - and of the physiological arousal
+that comes with such anticipation - on such probabilistic estimates may
+be even higher when CSs are suppressed from awareness, leaving the
+overall rate and distribution of shocks as the only bases for such
+predictions. We address this issue by we using Bayesian model
+comparison, demonstrating that a model featuring updating of learning
+account for the findings better than a shock-expectation model based on
+the distribution of shocks across the experiment.
+
+\clearpage
+\singlespacing
+
+** STable. Sample                                              :ignore:
+# go back to single space for Tables and Figures
+\singlespacing
+#+NAME: srctabsample
+#+HEADER: :exports results 
+#+BEGIN_SRC R :results value :colnames yes :session :cache nil
+df_sum_stats <- function(df) { 
+  dfm <- df %>% gather(key=Characteristic, value=Value) %>%
+					group_by(Characteristic) %>%
+					dplyr::summarize(N=sum(!is.na(Value)),
+					                 Mean=round(mean(Value, na.rm=TRUE), 1),
+													 SD=round(sd(Value, na.rm=TRUE), 1))
+
+}
+
+cfml <- lapply(unique(cfs$manipulation),
+                 function(x) {
+                    df_sum_stats(cfs %>% filter(manipulation==x) %>% 
+										               dplyr::select(age, fsq, stait, stais, 
+																								 meanur))
+                  })
+
+m1 <- data.frame(Characteristic="Male", 
+                 N=sum(cfs$sex[cfs$manipulation=="CFS"]==1),
+								 Mean=NA, SD=NA)
+f1 <- data.frame(Characteristic="Female", 
+                 N=sum(cfs$sex[cfs$manipulation=="CFS"]==0),
+								 Mean=NA, SD=NA)
+
+m2 <- data.frame(Characteristic="Male", 
+                 N=sum(cfs$sex[cfs$manipulation=="noCFS"]==1),
+								 Mean=NA, SD=NA)
+f2 <- data.frame(Characteristic="Female", 
+                 N=sum(cfs$sex[cfs$manipulation=="noCFS"]==0),
+								 Mean=NA, SD=NA)
+
+cfml[[1]] <- rbind(cfml[[1]], m1, f1)
+cfml[[2]] <- rbind(cfml[[2]], m2, f2)
+									
+cfm <- cbind(cfml[[1]], cfml[[2]][, -1]) 
+colnames(cfm)[c(2, 5, 6, 7)] <- c("CFS", "noCFS", "M2", 
+                                      "SD2")
+
+# set order of variables in table
+ch_of_interest <- c("Male", "Female", "age",  
+                    "stait", "stais", "fsq", "meanur")
+cfm$Characteristic <- factor(cfm$Characteristic, levels=ch_of_interest) 
+cfm <- cfm %>% dplyr::arrange(Characteristic)
+cfm$Characteristic <- c("Male", "Female", "Age, y", "STAIT", 
+                         "STAIS", "FSQ", "UR, SNA units")
+colnames(cfm) <- c("*Characteristic*", "*N (CFS)*", "*Mean*", "*SD*", 
+                   "*N (no-CFS)*", "*Mean*", "*SD*")									
+  
+return(cfm)
+#cfm1 <- df_sum_stats(cfs)
+#+END_SRC
+
+#+ATTR_LATEX: center:nil
+#+ATTR_LATEX: \tiny
+#+CAPTION: *Sample characteristics.*
+#+CAPTION: Note: STAI data for 7 participants (6 in
+#+CAPTION: the CFS condition) and FSQ data for 7
+#+CAPTION: participants (all in the CFS condition)
+#+CAPTION: were lost due to an archiving
+#+CAPTION: error. Exclusion of these participants
+#+CAPTION: from subsequent analyses does not alter
+#+CAPTION: the overall pattern of results.
+#+CAPTION: /Abbreviations/: CFS, Continuous Flash
+#+CAPTION: Suppression; SD, Standard deviation;
+#+CAPTION: STAIS/STAIT, state/trait anxiety
+#+CAPTION: subscale of the Spielberger State-Trait
+#+CAPTION: Anxiety Inventory; FSQ, Fear of Spider
+#+CAPTION: Questionnaire;  
+#+CAPTION: UR, unconditioned response (shock response);
+#+CAPTION: SNA, sudomotor nerve activity.
+#+NAME: tabsample
+#+RESULTS[b92f7217ce7f1f7b599adbb8519a2a3ec73b18d8]: srctabsample
+| *Characteristic* | *N (CFS)* | *Mean* | *SD* | *N (no-CFS)* | *Mean* | *SD* |
+|------------------+-----------+--------+------+--------------+--------+------|
+| Male             |        38 |    nil |  nil |            7 |    nil |  nil |
+| Female           |        48 |    nil |  nil |            5 |    nil |  nil |
+| Age, y           |        86 |   29.7 |  8.3 |           12 |   31.7 | 10.6 |
+| STAIT            |        80 |   34.2 |  9.6 |           11 |   33.5 | 12.3 |
+| STAIS            |        80 |   29.4 |  8.6 |           11 |   28.4 |  9.2 |
+| FSQ              |        79 |   43.5 | 21.5 |           12 |   36.8 | 12.1 |
+| UR, SNA units    |        86 |    1.8 |  0.5 |           12 |    1.8 |  0.7 |
+
+\clearpage
+
+** Figure. Simulations                                         :ignore:
+#+NAME: cropfigbinomsim
+#+BEGIN_SRC sh :exports results :results silent
+    pdfcrop ../output/figures/cfs_sub_binomsim.pdf
+#+END_SRC
+
+#+CAPTION: *Examination of tracking behavior in the*
+#+CAPTION: *correspondence between time courses of*
+#+CAPTION: *forced-choice responses and stimulus*
+#+CAPTION: *presentation in*
+#+CAPTION: *the CFS group.* *A.* *Forced choice responses*
+#+CAPTION: *(blue) versus stimulus presentation (red)*
+#+CAPTION: *in an illustrative participant.* 
+#+CAPTION: This participant shows
+#+CAPTION: periods in which forced-choice responses
+#+CAPTION: track or are in direct opposition to both
+#+CAPTION: the presented stimuli and shock
+#+CAPTION: application, suggesting that this
+#+CAPTION: participant tracked the spider and/or the
+#+CAPTION: shock with his responses. *B.* *Probability*
+#+CAPTION: *of consecutive hits (10^5 simulations).* 
+#+CAPTION: Hits were defined as the
+#+CAPTION: number of consecutive trials where the
+#+CAPTION: time courses of forced-choice responses
+#+CAPTION: and stimulus presentation were either
+#+CAPTION: identical or directly opposed to each other. 
+#+CAPTION: To quantify the
+#+CAPTION: probability of consecutive hits, we
+#+CAPTION: simulated the probabilities for all
+#+CAPTION: possible levels of consecutive hits (e.g.,
+#+CAPTION: from 1 to 31 for 32 trials). We simulated
+#+CAPTION: 10^5 draws of a binomial distribution, and
+#+CAPTION: calculated the average probability to see
+#+CAPTION: (at least) each possible number of
+#+CAPTION: consecutive hits. The probability
+#+CAPTION: exponentially declines as the number of
+#+CAPTION: consecutive hits increases, reaching a
+#+CAPTION: probability of about 5% at 8 consecutive
+#+CAPTION: hits. Thus, observing 8 or more
+#+CAPTION: consecutive hits in 32 trials in a
+#+CAPTION: perceptually unaware participant who is
+#+CAPTION: truly guessing is unlikely, which is why
+#+CAPTION: we considered this an indication for 
+#+CAPTION: stimulus tracking behavior.
+#+NAME: figbinomsim
+#+ATTR_LATEX: :width 1.0\textwidth 
+[[file:cfs_sub_binomsim-crop.pdf]]
+
+\clearpage
+
+** SFigure. Models                                             :ignore:
+#+NAME: cropfigmodelfits
+#+BEGIN_SRC sh :exports results :results silent
+    pdfcrop ../output/figures/cfs_modelfits.pdf
+#+END_SRC
+
+#+CAPTION: *Time series of measured and predicted*
+#+CAPTION: *threat response indicate that the*
+#+CAPTION: *Rescorla-Wagner learning model explains*
+#+CAPTION: *the data better than an alternative*
+#+CAPTION: *trial-sequence learning model that simply*
+#+CAPTION: *assumed a sequence of alternating trial*
+#+CAPTION: *types (no-shock/shock or vice*
+#+CAPTION: *versa).* Trial-wise mean responses to CS+
+#+CAPTION: and CS- are shown by group, learning model
+#+CAPTION: and experimental order. Each panel also
+#+CAPTION: shows the Pearson correlation between
+#+CAPTION: predicted and measured time series and the
+#+CAPTION: learning rate (parameter alpha in each of
+#+CAPTION: the learning models). The generally higher
+#+CAPTION: Pearson correlation coefficients are
+#+CAPTION: consistent with the formal model
+#+CAPTION: comparison between the Rescorla-Wagner
+#+CAPTION: model and the trial-sequence model, which
+#+CAPTION: confirmed that the Rescorla-Wagner model
+#+CAPTION: provided stronger evidence than the
+#+CAPTION: alternative learning model. r, Pearson
+#+CAPTION: correlation coefficient; alpha, learning
+#+CAPTION: rate; RW, Rescorla-Wagner learning model;
+#+CAPTION: Sequence, trial-sequence learning model;
+#+CAPTION: SNA, sudomotor nerve activity; 
+#+CAPTION: ***, /P/ < 0.001; 
+#+CAPTION: **, /P/ < 0.01; 
+#+CAPTION: *, /P/ < 0.05.
+#+NAME: figmodelfits
+#+ATTR_LATEX: :width 1.0\textwidth 
+[[file:cfs_modelfits-crop.pdf]]
+
+
