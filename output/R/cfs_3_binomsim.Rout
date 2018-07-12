@@ -1,0 +1,101 @@
+
+R version 3.3.1 (2016-06-21) -- "Bug in Your Hair"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin13.4.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> # CFS binomial simulations
+> #
+> # modified from whuber's version as proposed 
+> # on Stackoverflow:
+> #
+> # http://stats.stackexchange.com/questions/21825/
+> # probability-over-multiple-blocks-of-events/23762#23762
+> #
+> # PH, 11/16
+> 
+> FoundHits <- function(nseq, ntrials, p) {
++   # Are there at least nseq consecutive hits
++   # in ntrials of coin tosses?
++   x <- rbinom(ntrials+1, 1, p)   
++   x[1] <- 0   
++   if (sum(x) >= nseq) {  
++     max(diff(cumsum(x), lag = nseq)) >= nseq  
++   } else {
++      FALSE 
++   }
++ }
+> 
+> PlotSims <- function(nseqs, means, type = "o", main = NULL) {
++   plot(x        = nseqs,
++        y        = means,
++        type     = type,
++        ylab     = "",
++        xlab     = "",
++        lwd      = 2,
++        pch      = 19,
++        cex      = 0.5,
++        cex.main = 1,
++        las      = 1,
++        main     = main)
++   abline(h = 0.05, lty = 2, lwd = 1.5)
++   legend("topright",
++          bty    = "n",
++          lty    = c(2),
++          legend = c("Pr = .05"),
++          inset  = .01)
++ }
+> 
+> # set parameters to reasonable values
+> nsims <- 10^5
+> ntrials <- c(8, 12, 16, 20, 24, 28, 32)
+> p <- 1/2
+> means <- matrix(nrow = length(ntrials), ncol= max(ntrials))
+> set.seed(17)
+> 
+> # file name should be the same as R-file
+> pdf("../output/figures/cfs_3_binomsim.pdf")
+> par(oma = c(3, 6, 1, 3), mar = c(3.5, 2, 2, 2))
+> lf <- layout(matrix(c(1:9), nrow = 3,  ncol = 3, byrow = TRUE))
+> #layout.show(lf)
+> 
+> # run the simulation
+> for (h in 1:length(ntrials)) { 
++   nseqs <- c(1:ntrials[h])
++   for (i in 1:length(nseqs)) {
++     means[h, i] <- mean(replicate(nsims, FoundHits(nseqs[i], ntrials[h], p)))
++   } 
++   # plot the solution
++   PlotSims(nseqs, means[h, 1:ntrials[h]], main = paste(ntrials[h], "Trials"))
++ }
+> 
+> # we still need axis labels and possibly a title
+> plot.new()
+> mtext("Consecutive Hits", side = 1, line= 1, outer = TRUE, font = 2,
++       cex = 1.5, xpd = NA)
+> mtext("Probability", side = 2, line = 3, outer = TRUE, font = 2,
++       cex = 1.5, xpd = NA, las = 3)
+> #mtext(3, paste("Hits in ", ntrials," trials (", nsims," simulations)", sep ="")
+> 
+> dev.off()
+null device 
+          1 
+> 
+> proc.time()
+   user  system elapsed 
+320.272   2.795 331.494 

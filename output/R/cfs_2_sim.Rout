@@ -1,0 +1,86 @@
+
+R version 3.3.1 (2016-06-21) -- "Bug in Your Hair"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin13.4.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> #
+> # CFS simulations
+> #
+> # PH, 11/14/16
+> 
+> # settings
+> cols=c("red","darkblue","gray")
+> stim=c("Spider A","Spider B")
+> ntrials  <- 16
+> alpha  <- c(.05,.1,.25,.4,.5,.6,.75,.9)
+> #alpha  <- c(.5,.6,.75)
+> lambda  <- runif(ntrials,0,1)
+> lambda[lambda>0.5]  <- 0
+> lambda[lambda<=0.5]  <- 0
+> lambda[1:ntrials/2]  <- 1
+> prev_v  <- 0
+> v  <- 0
+> 
+> # main title
+> m  <- expression(paste("Rescorla-Wagner model: ",v[t+1]," = ",v[t]," + ",alpha,"(",lambda," - ",v[t],")")) 
+> 
+> # open pdf
+> pdf(file="../output/figures/cfs_2_sim.pdf")
+> 
+> # layout
+> par(cex.main=1.0,cex.axis=1.0,las=1,lwd=1.0,mar=c(2,1,3,1),oma=c(6,6,9,6))
+> nf <- layout(matrix(c(1:9),ceiling(length(alpha)/3),3,byrow=T))
+> #nf <- layout(matrix(c(1:9),3,3,byrow=T))
+> #layout.show(nf)
+> 
+> # loop over learning rates and trials
+> for (h in 1:length(alpha)) {
++   am  <- substitute(paste(alpha,"=",a),list(a=alpha[h]))
++   for (i in 1:(ntrials-1)) {
++     v[i+1]  <- prev_v + alpha[h] * (lambda[i] - prev_v)
++     prev_v  <- v[i+1]
++   }
++ 	plot(c(1:ntrials),v,"o",xlab="",lwd=2,axes=F,ylim=c(0,1),col=cols[1],cex=.5,main=am)
++ 	points(c(1:ntrials),c(rep(0,ntrials/2),v[1:(ntrials/2)]),lwd=2,col=cols[2],cex=.5)
++ 	lines(c(1:ntrials),c(rep(0,ntrials/2),v[1:(ntrials/2)]),lwd=2,col=cols[2])
++ 	axis(1,at=seq(0,ntrials),cex.axis=.9)
++ 	if (h %% 3 == 1) {
++ 		axis(2)
++ 	}
++   abline(v=8.5,col="lightgray",lty=2,lwd=2)
++ }
+> 
+> # add labels
+> mtext("Value",2,2.5,cex=1.2,font=2,outer=T,las=3)
+> mtext("Trial",1,1.2,cex=1.2,font=2,outer=T)
+> mtext(m,3,0,cex=1.5,font=2,outer=T)
+> mtext("Simulations",3,4,cex=2.0,font=2,outer=T)
+> 
+> # add empty plot
+> plot.new()
+> 
+> # legend
+> legend("topright",bty="n",cex=1.0,lty=1,lwd=2,col=cols[1:2],legend=stim)
+> dev.off()
+null device 
+          1 
+> 
+> proc.time()
+   user  system elapsed 
+  1.862   0.096   1.989 

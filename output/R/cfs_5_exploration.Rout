@@ -1,0 +1,265 @@
+
+R version 3.3.1 (2016-06-21) -- "Bug in Your Hair"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin13.4.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> # CFS data exploration
+> # PH, 10/26/16
+> 
+> require(lattice)
+Loading required package: lattice
+> require(data.table)
+Loading required package: data.table
+Warning message:
+package ‘data.table’ was built under R version 3.3.2 
+> require(plyr)
+Loading required package: plyr
+> require(latticeExtra)
+Loading required package: latticeExtra
+Loading required package: RColorBrewer
+> require(scales)
+Loading required package: scales
+Warning message:
+package ‘scales’ was built under R version 3.3.2 
+> 
+> 
+> c <- read.csv("../data/cfs.csv")
+> c <- subset(c,!(spider==""|group==""|stage==""))
+> 
+> c$id <- factor(c$id)
+> c$spider <- factor(c$spider)
+> c$group <- factor(c$group)
+> c$stage <- factor(c$stage)
+> 
+> c$spidernum[c$spider=="Spider A"]  <- 0
+> c$spidernum[c$spider=="Spider B"]  <- 1
+> c$visrespnum[c$visresp==1]  <- 0
+> c$visrespnum[c$visresp==2]  <- 1
+> 
+> # create marker for overlap
+> # also set limit for overlap
+> ollim <- 7
+> foo <- ddply(c, 
++ 	c("id"),
++ 	summarise,
++ 	overlap=!xor(spidernum,visrespnum)
++ )   
+> 
+> foo.2 <- ddply(subset(foo,!is.na(overlap)), 
++ 	c("id"),
++ 	summarise,
++ 	hasproblem= (max(diff(cumsum(!overlap),lag=ollim)) >= ollim | max(diff(cumsum(overlap),lag=ollim)) >= ollim)
++ )   
+> c  <- merge(c,foo.2,by=c("id"),all=T)
+> 
+> # set binary marker for shocks
+> c$shockapplied[c$spider=="Spider A"&c$stage=="Acquisition"]  <- "Yes"
+> c$shockapplied[c$spider=="Spider B"&c$stage=="Acquisition"]  <- "No"
+> c$shockapplied[c$spider=="Spider A"&c$stage=="Reversal"]  <- "No"
+> c$shockapplied[c$spider=="Spider B"&c$stage=="Reversal"]  <- "Yes"
+> c$shockapplied  <- factor(c$shockapplied)
+> 
+> # colors
+> cols = c("red","blue","gray")
+> 
+> # pdf settings 
+> pdf("../output/figures/cfs_5_exploration.pdf",onefile=TRUE,pointsize=12)
+> 
+> for (h in 2:2) {
++ 	if (h == 1) {
++ 		c$cr <- c$scrpeaksqrtn
++ 		c$ur <- c$scrpeak
++ 		c$outcome <- "SCR"
++ 	} else {
++ 		c$cr <- log(c$dcm2 + 1)
++ 		#c$cr <- c$dcm2
++ 		c$ur <- log(c$dcm2 + 1)
++ 		#c$ur <- c$dcm2
++ 		c$outcome <- "aSNA Amplitude"
++ 	}
++ 
++   # plot the trial orders with presumed shock expectancies
++   co  <- subset(c,id==999|id==949|id==242|id==204)
++   co <- co[order(co$order,co$trial),]
++   xy <- xyplot(
++     trial ~ order,group=spider,
++     data=co,
++     auto.key=F,
++     ylim=rev(c(0,35)),
++     par.settings=simpleTheme(
++       cex=1.1,
++       pch=15,
++       col=cols[1:2]
++     ),
++     scales=list(
++       alternating=F,
++       y=list(
++         at=c(1,8,16,24,32)
++       )
++     ),
++     key=list(
++       columns=2,
++       text=list(lab=c("Spider A","Spider B")),
++       points=list(pch=c(15,15), col=cols[1:2])
++     ),				
++     panel=function(x,y,...){
++       panel.xyplot(x,y,...)
++       panel.text(x,y,co$shockprob,cex=0.5,pos=4,offset=2)
++     },
++     ylab=list("Trial",cex=1.25,font=2),
++     xlab=list("Order",cex=1.25,font=2),
++     main="Trial Orders With Expected Shock Probabilities"
++   )
++   print(xy)
++ 
++ 	for (i in 1:nlevels(c$group)) {	
++ 			## Set background color of strips to grayscales:
++ 			strip.background <- trellis.par.get("strip.background")
++ 			trellis.par.set(strip.background = list(col = grey(7:1/8)))
++   
++ 			## Set color of plot symbols to grayscale:
++ 			plot.symbol <- trellis.par.get("plot.symbol")
++ 			trellis.par.set(plot.symbol = list(col = grey(5/8)))
++ 
++ 			# always start with setting par
++ 			par(cex.main=1.0,cex.axis=1.0,las=1,lwd=1.0,mar=c(3,2,3,2),oma=c(6,6,6,6))
++ 			layout(matrix(c(1,5,9,2,6,10,3,7,11,4,8,12),ncol=4))
++ 		
++ 			# covariates
++       covs  <- c("stais","stait","fsq","age","debriefq1","debriefq2","debriefq3","visresp","confresp","meanperc","meanresp","meanconf")
++       for (cc in 1:length(covs)) {
++         ccs  <- subset(c,trial==1&group==levels(c$group)[i])
++         cv  <- ccs[,covs[cc]]
++         h <- hist(cv,plot=F)
++         h$density = h$counts/sum(h$counts)*100
++         plot(h,col="gray52",xlab="",freq=F,main=paste(toupper(covs[cc])),ylim=c(0,100))
++       }
++       # print a title
++       mtext(paste("Distributions of covariates (",levels(c$group)[i],")",sep=""),3,2,cex=1.25,font=2,outer=T)
++       mtext("Percentage",2,2,cex=1.25,font=2,outer=T,las=3)
++ 
++ 	
++       # responses 
++       p <- par(mar=c(0.25,0.25,0,0),oma=c(7,1,1,1))
++       nf <- layout(matrix(c(1:95),19,5,byrow=T))
++       cg <- subset(c,group==levels(group)[i])
++       cg$group <- factor(cg$group)
++       cg  <- cg[order(cg$meanresp,cg$trial),]
++       cg$id  <- factor(cg$id,levels=unique(cg$id))
++       for (ii in 1:nlevels(cg$id)) {
++           cgg <- subset(cg,id==levels(cg$id)[ii])
++           plot(cgg$trial,cgg$visresp,type="l",col="red",axes="F",lwd=1,ylim=c(0.5,2.5))
++           rect(par("usr")[1],par("usr")[3],par("usr")[2],par("usr")[4],col = "grey80",border=0)
++           lines(cgg$trial,cgg$visresp,col="red",lwd=1.5,ylim=c(0.5,2.5))
++       } 
++       legend(x=40,y=0,cex=1.25,lty=1,lwd=1.5,col=c("red"),legend=c("Flower","Spider"),ncol=1,xpd=NA,bty="n",title="Response")
++       par(p)
++       warnings()
++ 
++       # confidence
++       p <- par(mar=c(0.25,0.25,0,0),oma=c(7,1,1,1))
++       nf <- layout(matrix(c(1:95),19,5,byrow=T))
++       cg <- subset(c,group==levels(group)[i])
++       cg  <- cg[order(cg$meanconf,cg$trial),]
++       cg$id  <- factor(cg$id,levels=unique(cg$id))
++       for (ii in 1:nlevels(cg$id)) {
++           cgg <- subset(cg,id==levels(cg$id)[ii])
++           plot(cgg$trial,cgg$confresp,type="l",col="red",axes="F",ylim=c(0.5,3.5))
++           rect(par("usr")[1],par("usr")[3],par("usr")[2],par("usr")[4],col = "grey80",border=0)
++           lines(cgg$trial,cgg$confresp,col="red",ylim=c(0.5,3.5),lwd=1.5)
++       } 
++       legend(x=40,y=0,lty=1,cex=1.25,lwd=1.5,col=c("red"),legend=c("Certain","Unsure","Guessing"),ncol=1,xpd=NA,bty="n",title="Confidence")
++       par(p)
++ 
++       # awareness
++       p <- par(mar=c(0.25,0.25,0,0),oma=c(7,1,1,1))
++       nf <- layout(matrix(c(1:95),19,5,byrow=T))
++       cg <- subset(c,group==levels(group)[i])
++       cg  <- cg[order(cg$meanperc,cg$trial),]
++       cg$id  <- factor(cg$id,levels=unique(cg$id))
++       for (ii in 1:nlevels(cg$id)) {
++           cgg <- subset(cg,id==levels(cg$id)[ii])
++           plot(cgg$trial,cgg$bleedlevel,type="l",col="red",axes="F",ylim=c(-0.5,1.5))
++           rect(par("usr")[1],par("usr")[3],par("usr")[2],par("usr")[4],col = "grey80",border=0)
++           lines(cgg$trial,cgg$bleedlevel,col="red",ylim=c(-0.5,1.5),lwd=1.5)
++       } 
++       legend(x=40,y=0,lty=1,cex=1.25,lwd=1.5,col=c("red"),legend=c("Likely","Possible","Unlikely"),ncol=1,xpd=NA,bty="n",title="Perceptual awareness")
++       par(p)
++ 
++       # spiders and responses
++       p <- par(mar=c(0.25,0.25,0,0),oma=c(7,1,1,1))
++       nf <- layout(matrix(c(1:95),19,5,byrow=T))
++       cg <- subset(c,group==levels(group)[i])
++       cg  <- cg[order(cg$hasproblem,cg$meanperc,cg$trial),]
++       cg$id  <- factor(cg$id,levels=unique(cg$id))
++       for (ii in 1:nlevels(cg$id)) {
++           cgg <- subset(cg,id==levels(cg$id)[ii])
++           plot(cgg$trial,cgg$visresp,type="l",col="red",axes="F",ylim=c(0.5,2.5))
++           rect(par("usr")[1],par("usr")[3],par("usr")[2],par("usr")[4],col = "grey80",border=0)
++           lines(cgg$trial,cgg$visresp,col="red",ylim=c(0.5,2.5),lwd=1.5)
++           lines(cgg$trial,cgg$spider,col=alpha("blue",0.5),lwd=1.5)
++       } 
++       legend(x=30,y=0,lty=1,cex=1.25,lwd=1.5,col=c("red"),legend=c("Flower","Spider"),ncol=1,xpd=NA,bty="n",title="Response")
++       legend(x=55,y=0,lty=1,cex=1.25,lwd=1.5,col=alpha("blue",0.5),legend=c("B","A"),ncol=1,xpd=NA,bty="n",title="Spider")
++       par(p)
++ 
++       # shocks and responses
++       p <- par(mar=c(0.25,0.25,0,0),oma=c(7,1,1,1))
++       nf <- layout(matrix(c(1:95),19,5,byrow=T))
++       cg <- subset(c,group==levels(group)[i])
++       cg  <- cg[order(cg$hasproblem,cg$meanperc,cg$trial),]
++       cg$id  <- factor(cg$id,levels=unique(cg$id))
++       for (ii in 1:nlevels(cg$id)) {
++           cgg <- subset(cg,id==levels(cg$id)[ii])
++           plot(cgg$trial,cgg$visresp,type="l",col="red",axes="F",ylim=c(0.5,2.5))
++           rect(par("usr")[1],par("usr")[3],par("usr")[2],par("usr")[4],col = "grey80",border=0)
++           lines(cgg$trial,cgg$visresp,col="red",ylim=c(0.5,2.5),lwd=1.5)
++           lines(cgg$trial,cgg$shockapplied,col=alpha("blue",0.5),lwd=1.5)
++       }
++       legend(x=30,y=0,lty=1,cex=1.25,lwd=1.5,col=c("red"),legend=c("Flower","Spider"),ncol=1,xpd=NA,bty="n",title="Response")
++       legend(x=55,y=0,lty=1,cex=1.25,lwd=1.5,col=alpha("blue",0.5),legend=c("Yes","No"),ncol=1,xpd=NA,bty="n",title="Shock")
++       par(p)
++     
++       # conditioned responses
++       p <- par(mar=c(0.25,0.25,0,0),oma=c(7,1,1,1))
++       nf <- layout(matrix(c(1:95),19,5,byrow=T))
++       cg <- subset(c,group==levels(group)[i])
++       cg  <- cg[order(cg$meanperc,cg$ctrial),]
++       cg$id  <- factor(cg$id,levels=unique(cg$id))
++       for (ii in 1:nlevels(cg$id)) {
++           cgga <- subset(cg,id==levels(cg$id)[ii]&spider=="Spider A")
++           plot(cgga$ctrial,cgga$cr,type="l",col="red",axes="F",ylim=c(-0.5,2))
++           rect(par("usr")[1],par("usr")[3],par("usr")[2],par("usr")[4],col = "grey80",border=0)
++           lines(cgga$ctrial,cgga$cr,col="red",ylim=c(-0.5,2),lwd=1.5)
++           cggb <- subset(cg,id==levels(cg$id)[ii]&spider=="Spider B")
++           lines(cggb$ctrial,cggb$cr,col="blue",lwd=1.5)
++       }
++       legend(x=20,y=0,lty=1,cex=1.25,col=c("red","blue"),legend=c("A","B"),ncol=1,xpd=NA,bty="n",title="Spider",lwd=1.5)
++       par(p)
++ 						
++ 	}
++ }
+> dev.off()
+null device 
+          1 
+> 
+> 
+> proc.time()
+   user  system elapsed 
+  5.008   0.163   5.229 

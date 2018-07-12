@@ -1,0 +1,107 @@
+# This is to create the final database
+# PH, 11/8/16
+
+require(data.table)
+
+# load data files
+cd <- read.csv("cfs_dcm3new.csv")
+cs <- read.csv("cfs_subjectdata.csv")
+co <- read.csv("cfs_orders.csv")
+ce <- read.csv("cfs_eprime.csv")
+
+# factorize all ids
+cd$id <- factor(cd$id)
+cs$id <- factor(cs$id)
+ce$id <- factor(ce$id)
+
+# remove practice trials in eprime
+#ce  <- subset(ce,trial>0)
+
+# merge subject data with eprime
+ces <- merge(ce,cs,all=T)
+
+# merge dcm and eprime-subjects
+cn <- merge(cd,ces,all=T)
+
+# discard any trials > 32
+#cn <- subset(cn,trial<33)
+
+# merge with eprime data
+#cne <- merge(cn,ce,all=T)
+
+# create final data file by merging with orders
+c <- merge(cn,co,by=c("order","trial"),all=T)
+
+# set bleedlevel
+c$bleedlevel <- NA
+c$bleedlevel[c$visresp==2&c$confresp==3] <- 2
+c$bleedlevel[c$visresp==2&c$confresp==2] <- 1
+c$bleedlevel[c$visresp==2&c$confresp==1] <- 0
+c$bleedlevel[c$visresp==1&c$confresp==3] <- 0
+c$bleedlevel[c$visresp==1&c$confresp==2] <- 0
+c$bleedlevel[c$visresp==1&c$confresp==1] <- 0
+c$bleedlevel[c$group=="Aware"] <- 2
+c$bleedlevel <- c$bleedlevel+1
+
+# create mean awareness
+ca <- aggregate(c$bleedlevel,by=list(c$id),FUN=mean)
+ca$id <- ca$Group.1
+ca$id <- factor(ca$id)
+ca$meanperc <- ca$x
+ca <- ca[c(3,4)]
+c$id <- factor(c$id)
+
+c <- merge(c,ca,all=T)
+
+# correct stages
+c$stage[c$stage=="AcquisitionOpp"] <- "Acquisition"
+c$stage[c$stage=="ReversalOpp"] <- "Reversal"
+c$stage[c$procedure=="ThankYou"] <- NA
+c$stage[c$trial<0] <- NA
+
+# correct stim
+c$stim[c$procedure=="CSminus"&c$stage=="Acquisition"] <- "CS-"
+c$stim[c$procedure=="CSplus"&c$stage=="Acquisition"] <- "CS+"
+c$stim[c$procedure=="CSminus"&c$stage=="Reversal"] <- "CS+"
+c$stim[c$procedure=="CSplus"&c$stage=="Reversal"] <- "CS-"
+c$stim[c$procedure=="CSminusRev"&c$stage=="Reversal"] <- "CS+"
+c$stim[c$procedure=="CSplusUSRev"&c$stage=="Reversal"] <- "CS-"
+c$stim[c$procedure=="CSminusRev"&c$stage=="Acquisition"] <- "CS-"
+c$stim[c$procedure=="CSplusUSRev"&c$stage=="Acquisition"] <- "CS+"
+
+# The spider-terminology is really confusing
+# so get this straight in the dataset
+# "Spider A" is always CS+, "Spider B" is CS-
+# irrespective of stage (acquisition or reversal)
+# So, set spider-type that was used as initial CS+
+# vertical spider type: X 
+# horizontal spider type: >< 
+c$firstunsafespidertype[c$order=="A"&c$preforder=="A"] <- "X"
+c$firstunsafespidertype[c$order=="A"&c$preforder=="B"] <- "X"
+c$firstunsafespidertype[c$order=="B"&c$preforder=="A"] <- "X"
+c$firstunsafespidertype[c$order=="B"&c$preforder=="B"] <- "X"
+c$firstunsafespidertype[c$order=="C"&c$preforder=="A"] <- "><"
+c$firstunsafespidertype[c$order=="C"&c$preforder=="B"] <- "><"
+c$firstunsafespidertype[c$order=="D"&c$preforder=="A"] <- "><"
+c$firstunsafespidertype[c$order=="D"&c$preforder=="B"] <- "><"
+
+# set ctrial
+dt <- data.table(subset(c,trial<0&trial<33)
+#dt[,ctrial:=1:.N,by=c("id","stim")]
+dt[,ctrial:=1:.N,by=c("id","spider")]
+c <- as.data.frame(dt)
+c <- c[order(c$id,c$trial),]
+
+c$id <- factor(c$id)
+c$spider <- factor(c$spider)
+c$group <- factor(c$group)
+c$stage <- factor(c$stage)
+c$visresp <- factor(c$visresp)
+c$confresp <- factor(c$confresp)
+#c$bleedlevel <- factor(c$bleedlevel)
+
+# sort file
+c <- c[order(c$id,c$trial),] 
+
+# write final data file
+write.csv(c,"../data/cfs_preproced.csv",na="",row.names=F)

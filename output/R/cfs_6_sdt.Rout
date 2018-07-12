@@ -1,0 +1,68 @@
+
+R version 3.3.1 (2016-06-21) -- "Bug in Your Hair"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin13.4.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> # This to produce cartoons of SDT plots
+> # PH, 12/4/16
+> 
+> rm(list=ls())
+> 
+> # open pdf device
+> pdf("../output/figures/cfs_6_sdt.pdf")
+> 
+> # layout
+> par(cex.main=1.0,cex.axis=1.0,las=1,lwd=1.0,mar=c(3,2,4,2),oma=c(6,6,9,6))
+> nf <- layout(matrix(c(1,2,3,4),2,2,byrow=T))
+> #layout.show(nf)
+> 
+> # vector of means
+> mu <- c(40,45,60,70,40,60,60,80)
+> sd <- 10 
+> x <- c(1:100)
+> 
+> for (i in c(1,3,5,7)) {
++   plot(x,dnorm(x,mu[i],sd),col="red",type="l",lwd=2,axes=F,xlab="",ylab="")
++ 
++   lines(x,dnorm(x,mu[i+1],sd),col="blue",lwd=2)
++   if (i > 3) {
++     axis(1,at=c(20,30,40,50,60,70),label=c("Low",rep(c(""),4),"High"))
++   } else {
++     axis(1,at=c(20,30,40,50,60,70),label=c(rep(c(""),6)))
++   }
++   if (i == 1) {
++     mtext("Low",3,2)
++     mtext("Low",2,2,las=3)
++   }
++   if (i == 3) {
++     mtext("High",3,2)
++   }
++   if (i == 5) {
++     mtext("High",2,2,las=3)
++   }
++ }    
+> mtext("Sensitivity",2,2,outer=T,font=2,cex=2,las=3)
+> mtext("Bias",3,2,outer=T,font=2,cex=2)
+> dev.off()
+null device 
+          1 
+> 
+> proc.time()
+   user  system elapsed 
+  2.019   0.101   2.120 

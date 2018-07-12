@@ -1,0 +1,999 @@
+
+R version 3.3.1 (2016-06-21) -- "Bug in Your Hair"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin13.4.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> # CFS group statistics and plots in R
+> # Started 11/8/16
+> # PH
+> 
+> rm(list = ls())
+> library('plyr')
+> library('lme4')
+Loading required package: Matrix
+> #library('lmerTest')
+> library('lsmeans')
+Loading required package: estimability
+Warning messages:
+1: package ‘lsmeans’ was built under R version 3.3.2 
+2: package ‘estimability’ was built under R version 3.3.2 
+> 
+> #lsm.options(pbkrtest.limit = 3520)
+> 
+> #install.packages('lsmeans')
+> outcomes <- c(expression(bold(paste("SQRT SCR (",mu,"S)",sep=""))),
++               expression(bold("SNA Amplitude (units)")))
+> types <- c("scr","dcm")
+> 
+> 
+> # open device
+> pdf("../output/figures/cfs_4_matrixplots.pdf")
+> 
+> 
+> # here we loop over the outcome measures
+> # since we don't have scr we start from 2
+> # this is really only because we were supposed to have 2 outcome measures, SCR and SNA
+> for (h in 2:2) {
++ 
++   # load dataset (comma seperated format)
++   r <- read.csv("../data/cfs.csv")
++   #r <- subset(r,!(spider==""|group==""))
++   r  <- subset(r,trial>0&trial<33&!group==""&!stage=="")
++   r$group <- factor(r$group)
++   r$manipulation <- factor(r$manipulation)
++   r$spider <- factor(r$spider)
++   r$stage <- factor(r$stage)
++   r$id  <- factor(r$id)
++   r$ordertype[r$order=="A"|r$order=="C"]  <- "RevSpAFirst"
++   r$ordertype[r$order=="B"|r$order=="D"]  <- "RevSpBFirst"
++   r$spidernum[r$spider=="Spider A"]  <- 0
++   r$spidernum[r$spider=="Spider B"]  <- 1
++   r$visrespnum[r$visresp==1]  <- 0
++   r$visrespnum[r$visresp==2]  <- 1
++ 
++   # create marker for overlap
++   # merge with original df
++   # set overlap limit
++   ollim <- 6
++   foo <- ddply(r, c("id"), summarise, overlap = !xor(spidernum, visrespnum)) 
++   foo.2 <- ddply(subset(foo, !is.na(overlap)), c("id"), summarise,
++                  hasproblem = (max(diff(cumsum(!overlap), lag = ollim)) >= ollim
++                    | max(diff(cumsum(overlap), lag = ollim)) >= ollim)) 
++   r  <- merge(r, foo.2, by = c("id"), all = TRUE)
++ 
++ 
++   # set outcome
++   if (h == 1) {
++     r$outcome <- r$scrsqrtconv
++   } else {
++    r$outcome <- r$dcm2
++   }
++ 
++   # plots, with different group assignments
++   btl <- c("Full",
++            "50%",
++            "25%",
++            "10%",
++            "0%",
++            "0%*")
++   bt <- factor(btl, levels = btl)
++ 
++   # create data frame for group statistics
++   #df.all <- data.frame(Group = NA, Threshold = NA, Effect = NA, Estimate = NA, SE = NA,
++   #                     df= NA, t = NA, P = NA)
++   df.all <- data.frame(Group = NA, Threshold = NA, Estimate = NA, SE = NA,
++                        DF = NA, CI.lower = NA, CI.upper = NA, t = NA, P = NA)
++ 
++   # set the layout to fit in one page
++   par(cex.main = 1.0, cex.axis = 1.0, las = 1, lwd = 1.0,
++       mar = c(1.5, 1.5, 2, 1.5), oma=c(1, 6, 1, 6))
++   nf <- layout(matrix(c(1:(3*nlevels(bt))), nlevels(bt), 3, byrow = TRUE),
++                width = rep(c(4, 4, 2), nlevels(bt)))
++   #layout.show(nf)
++   
++   for (g in 1:nlevels(bt)) {      
++                       
++     # assign groups
++     if (g == 1) rs <- subset(r)
++     else if (g == 2) rs <- subset(r, meanperc < .5 | group == "Aware")
++     else if (g == 3) rs <- subset(r, meanperc < .25 | group == "Aware")
++     else if (g == 4) rs <- subset(r, meanperc < .1 | group == "Aware")
++     else if (g == 5) rs <- subset(r, meanperc == 0 | group == "Aware")
++     else if (g == 6) rs <- subset(r, meanperc == 0 & hasproblem == FALSE |
++                                      r$group == "Aware")
++ 
++     # Group statistics 
++     cat(print(paste(levels(bt)[g])))
++     # test 3 way interaction
++     m1a   <- lmer(outcome ~ ctrial + (1 + stage * spider | id)
++                   + group + stage + spider + group:stage + group:spider
++                   + stage:spider, rs,  REML=FALSE)
++     m1b   <- lmer(outcome ~ ctrial + (1 + stage * spider | id)
++                  + group * stage * spider, rs,  REML=FALSE)
++     print(anova(m1a,m1b))
++     
++     m1   <- lmer(outcome ~ ctrial + (1 + stage * spider | id)
++                  + group * stage * spider, rs,  REML=TRUE)
++     #print(summary(m1))
++     #lsm.options(pbkrtest.limit = 3520)
++     #lsm <- lsmeans(m1, c("group", "stage", "spider"), mode="kenward-roger")
++     lsm <- lsmeans(m1, c("group", "stage", "spider"))
++       
++     # print(summary(lsm))
++     lsm.contr <- contrast(lsm, list(
++                                  "nCFS" = c(1, 0, -1,  0, -1,  0, 1, 0),
++                                  "wCFS" = c(0, 1,  0, -1,  0, -1, 0, 1)))
++     #print(summary(lsm.contr))
++     lsm.contr.tab <- summary(lsm.contr)
++ 
++           
++     
++     lsm.ci <- confint(lsm.contr)
++     lsmdf <- as.data.frame(lsm.ci)
++     lsmdf[c(2:6)] <- round(lsmdf[c(2:6)], 2)
++     lsmdf$t <- round(lsm.contr.tab$t.ratio, 2)
++     lsmdf$P <- round(lsm.contr.tab$p.value, 3)
++     lsmdf$Threshold <- levels(bt)[g]
++     lsmdf <- lsmdf[c(1, 9, c(2:8))]
++     colnames(lsmdf) <- c("Group", "Threshold", "Estimate", "SE", "DF", "CI.lower",
++                          "CI.upper", "t", "P")
++ 
++     # unless it's the first iteration, remove nCFS results
++     #if (!g == 1) lsmdf <- lsmdf[2, ]
++     print(lsmdf)                           
++ 
++     # as control condition, print also anova results
++     a1 <- aov(outcome ~ group * stage * spider + Error(id/stage * spider), rs)
++     print(summary(a1))
++     a2 <- aov(outcome ~ stage * spider + Error(id/stage * spider),
++               subset(rs, group=="Aware"))
++     print(summary(a2))
++     a3 <- aov(outcome ~ stage * spider + Error(id/stage * spider),
++               subset(rs, group=="Unaware"))
++     print(summary(a3))
++ 
++     df.all <- rbind(df.all, lsmdf)
++     # write to disk if it is the last iteration
++     if (g == nlevels(bt)) { 
++       # remove first row
++       df.all <- df.all[c(2:nrow(df.all)),]
++       # remove nCFS other than full threshold
++       df.all <- df.all[df.all$Group=="wCFS" | df.all$Threshold == "Full", ]
++       write.csv(df.all,"../output/tables/cfs_4_matrixplots.csv", na ="",
++                 row.names = FALSE)
++     }
++                                          
++     # this is for time courses
++     for (i in 1:nlevels(r$group)) {
++       
++       # create means and se
++       rm <- ddply(rs, c("group","ctrial","spider"), summarise,
++                   N = sum(!is.na(outcome)), mean = mean(outcome,na.rm=TRUE),
++                   sd = sd(outcome, na.rm = TRUE), se = sd/sqrt(N)) 
++       rmm <- subset(rm, group == levels(rm$group)[i] & spider == 'Spider B') 
++       rmp <- subset(rm, group == levels(rm$group)[i] & spider == 'Spider A') 
++ 
++       mxy <- 1.6 
++       mxx <- 16
++ 
++       plot(rmm$ctrial, rmm$mean, type = "p", cex = 1.0, bty = "n",
++            ylim = c(-0.2, mxy), xlim = c(0.8, mxx + 0.2), xlab = "Trial",
++            ylab = "", las = 1, lwd = 1, xaxp = c(1, mxx, mxx - 1),
++            cex.main = 1.0, yaxt = "n", xaxt = "n")
++ 
++       # make sure tick labels are at every other trial
++       axis(1, at = c(1:16), labels = FALSE)
++       axis(1, at = c(1, seq(4, 16, 4)), labels = c(1, seq(4, 16, 4)))
++ 
++       # plot groups in first row
++       if (g == 1) {
++         mtext(paste(levels(r$manipulation)[i], sep = ""), 3, 1,
++               cex = 0.65, font = 2)
++       }
++ 
++       points(rmp$ctrial, rmp$mean, type = "p", pch = 19, cex = 1.0)
++       lines(rmm$ctrial, rmm$mean, cex = 1.0, lwd = 1)
++       lines(rmp$ctrial, rmp$mean, cex = 1.0, lwd = 1)
++ 
++       # add y2 axis 
++       #text(mxx*1.1,mxy*.5,labels=paste(levels(r$group)[i]),font=2,cex=2,srt = -90,xpd=true)
++ 
++       # error bars cs-
++       mses <- rmm$mean - rmm$se
++       pses <- rmm$mean + rmm$se
++       arrows(rmm$ctrial, mses, rmm$ctrial, pses, length = 0.00, angle = 90,
++              code = 3, lwd = 1)
++ 
++       # error bars cs+
++       mses <- rmp$mean-rmp$se
++       pses <- rmp$mean+rmp$se
++       arrows(rmp$ctrial, mses, rmp$ctrial, pses, length = 0.00, angle = 90,
++              code = 3, lwd = 1)
++ 
++       if (i == 1) {
++         axis(2)
++       }
++       if (g == 1 && i == 1) {
++         legend(x = (mxx * .95), y = mxy * 1.4, c("Spider A", "Spider B"),
++                pch = c(19,1), lty = c(1,1), bty = "n", xpd = NA)
++       }
++     }
++     # add main title
++     #mtext(paste(levels(bt)[g]),3,2,outer=T,font=2,cex=1.5,xpd=NA)
++ 
++     # plot interaction as dot plot
++     plot(x=c(1, 2), y=lsmdf$Estimate,
++          xlim=c(0.75, 2.25),
++          ylim=c(-0.2, 1.6),
++          pch=19,
++          axes=F,
++          xlab="",
++          ylab="")
++     lines(x=c(1, 1),
++           y=c(lsmdf$CI.lower[1], lsmdf$CI.upper[1]),
++           lwd=2)
++     lines(x=c(2, 2),
++           y=c(lsmdf$CI.lower[2], lsmdf$CI.upper[2]),
++           lwd=2)
++     abline(h=0, lty=3)
++     mtext(levels(bt)[g], 4, 4.5, font=2, xpd=NA, adj=1)
++     # plot header for first row
++     if (g == 1) {
++       mtext(side=3, line=1, at=c(1, 2),
++             text=c("nCFS", "wCFS"), font=2, cex=0.65)
++     }
++     # plot label underneath last row
++     if (g == nlevels(bt)) {
++       mtext(side=1, line=1, at=1.5, text="Reversal Learning",
++             font=2, cex=0.75)
++     }
++   }
++ }
+[1] "Full"
+FullData: rs
+Models:
+m1a: outcome ~ ctrial + (1 + stage * spider | id) + group + stage + 
+m1a:     spider + group:stage + group:spider + stage:spider
+m1b: outcome ~ ctrial + (1 + stage * spider | id) + group * stage * 
+m1b:     spider
+    Df    AIC    BIC  logLik deviance  Chisq Chi Df Pr(>Chisq)
+m1a 19 6535.6 6652.8 -3248.8   6497.6                         
+m1b 20 6536.1 6659.4 -3248.0   6496.1 1.5364      1     0.2151
+Loading required namespace: lmerTest
+  Group Threshold Estimate   SE  DF CI.lower CI.upper    t     P
+1  nCFS      Full     0.62 0.25 108     0.12     1.11 2.48 0.015
+2  wCFS      Full     0.28 0.12 108     0.05     0.51 2.37 0.020
+
+Error: id
+           Df Sum Sq Mean Sq F value Pr(>F)
+group       1    1.4   1.367   0.262   0.61
+spider      1    7.0   6.990   1.337   0.25
+Residuals 108  564.7   5.228               
+
+Error: spider
+       Df Sum Sq Mean Sq
+spider  1 0.3985  0.3985
+
+Error: id:stage
+              Df Sum Sq Mean Sq F value Pr(>F)
+stage          1   0.03  0.0305   0.045  0.832
+group:stage    1   0.41  0.4136   0.615  0.435
+stage:spider   1   0.17  0.1711   0.254  0.615
+Residuals    108  72.63  0.6725               
+
+Error: id:spider
+              Df Sum Sq Mean Sq F value Pr(>F)
+group:spider   1   0.67  0.6688   1.801  0.182
+Residuals    108  40.11  0.3714               
+
+Error: id:stage:spider
+                    Df Sum Sq Mean Sq F value  Pr(>F)   
+stage:spider         1  25.26  25.257  10.235 0.00181 **
+group:stage:spider   1   3.75   3.749   1.519 0.22042   
+Residuals          108 266.51   2.468                   
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: Within
+            Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 3110  979.8  0.3151               
+
+Error: id
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 19  82.92   4.364               
+
+Error: spider
+       Df Sum Sq Mean Sq
+spider  1  1.018   1.018
+
+Error: id:stage
+          Df Sum Sq Mean Sq F value Pr(>F)
+stage      1  0.258  0.2582   0.655  0.429
+Residuals 19  7.495  0.3945               
+
+Error: id:spider
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 19  12.71  0.6688               
+
+Error: id:stage:spider
+             Df Sum Sq Mean Sq F value Pr(>F)  
+stage:spider  1  15.17  15.165   5.441 0.0308 *
+Residuals    19  52.96   2.787                 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: Within
+           Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 560  178.2  0.3182               
+
+Error: id
+          Df Sum Sq Mean Sq F value Pr(>F)
+spider     1    7.0   6.990   1.291  0.259
+Residuals 89  481.7   5.413               
+
+Error: spider
+       Df  Sum Sq Mean Sq
+spider  1 0.04941 0.04941
+
+Error: id:stage
+             Df Sum Sq Mean Sq F value Pr(>F)
+stage         1   0.19  0.1860   0.254  0.615
+stage:spider  1   0.17  0.1711   0.234  0.630
+Residuals    89  65.13  0.7318               
+
+Error: id:spider
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 89   27.4  0.3079               
+
+Error: id:stage:spider
+             Df Sum Sq Mean Sq F value Pr(>F)  
+stage:spider  1  13.84  13.840   5.768 0.0184 *
+Residuals    89 213.55   2.399                 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: Within
+            Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 2550  801.6  0.3144               
+[1] "50%"
+50%Data: rs
+Models:
+m1a: outcome ~ ctrial + (1 + stage * spider | id) + group + stage + 
+m1a:     spider + group:stage + group:spider + stage:spider
+m1b: outcome ~ ctrial + (1 + stage * spider | id) + group * stage * 
+m1b:     spider
+    Df    AIC    BIC  logLik deviance  Chisq Chi Df Pr(>Chisq)
+m1a 19 5016.1 5128.4 -2489.1   4978.1                         
+m1b 20 5017.3 5135.5 -2488.7   4977.3 0.8001      1     0.3711
+  Group Threshold Estimate   SE DF CI.lower CI.upper    t     P
+1  nCFS       50%     0.62 0.26 83     0.10     1.13 2.38 0.019
+2  wCFS       50%     0.35 0.14 83     0.07     0.64 2.47 0.016
+
+Error: id
+          Df Sum Sq Mean Sq F value Pr(>F)
+group      1    0.7   0.717   0.132  0.718
+Residuals 83  452.0   5.445               
+
+Error: spider
+       Df  Sum Sq Mean Sq
+spider  1 0.04684 0.04684
+
+Error: id:stage
+            Df Sum Sq Mean Sq F value Pr(>F)
+stage        1   0.04  0.0440   0.059  0.809
+group:stage  1   0.49  0.4864   0.648  0.423
+Residuals   83  62.26  0.7501               
+
+Error: id:spider
+             Df Sum Sq Mean Sq F value Pr(>F)
+group:spider  1   1.07  1.0684   2.397  0.125
+Residuals    83  37.00  0.4458               
+
+Error: id:stage:spider
+                   Df Sum Sq Mean Sq F value  Pr(>F)   
+stage:spider        1  29.35  29.346  10.981 0.00137 **
+group:stage:spider  1   2.10   2.098   0.785 0.37818   
+Residuals          83 221.81   2.672                   
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: Within
+            Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 2380  735.8  0.3092               
+
+Error: id
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 19  82.92   4.364               
+
+Error: spider
+       Df Sum Sq Mean Sq
+spider  1  1.018   1.018
+
+Error: id:stage
+          Df Sum Sq Mean Sq F value Pr(>F)
+stage      1  0.258  0.2582   0.655  0.429
+Residuals 19  7.495  0.3945               
+
+Error: id:spider
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 19  12.71  0.6688               
+
+Error: id:stage:spider
+             Df Sum Sq Mean Sq F value Pr(>F)  
+stage:spider  1  15.17  15.165   5.441 0.0308 *
+Residuals    19  52.96   2.787                 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: Within
+           Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 560  178.2  0.3182               
+
+Error: id
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 64    369   5.766               
+
+Error: spider
+       Df  Sum Sq Mean Sq
+spider  1 0.09743 0.09743
+
+Error: id:stage
+          Df Sum Sq Mean Sq F value Pr(>F)
+stage      1   0.27  0.2722   0.318  0.575
+Residuals 64  54.76  0.8557               
+
+Error: id:spider
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 64   24.3  0.3796               
+
+Error: id:stage:spider
+             Df Sum Sq Mean Sq F value Pr(>F)  
+stage:spider  1  16.28  16.278    6.17 0.0156 *
+Residuals    64 168.85   2.638                 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: Within
+            Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 1820  557.6  0.3064               
+[1] "25%"
+25%Data: rs
+Models:
+m1a: outcome ~ ctrial + (1 + stage * spider | id) + group + stage + 
+m1a:     spider + group:stage + group:spider + stage:spider
+m1b: outcome ~ ctrial + (1 + stage * spider | id) + group * stage * 
+m1b:     spider
+    Df    AIC    BIC  logLik deviance  Chisq Chi Df Pr(>Chisq)
+m1a 19 4295.9 4405.8 -2128.9   4257.9                         
+m1b 20 4296.7 4412.4 -2128.4   4256.7 1.1556      1     0.2824
+  Group Threshold Estimate   SE DF CI.lower CI.upper    t     P
+1  nCFS       25%     0.62 0.26 73     0.10     1.13 2.39 0.019
+2  wCFS       25%     0.30 0.16 73    -0.01     0.61 1.90 0.061
+
+Error: id
+          Df Sum Sq Mean Sq F value Pr(>F)
+group      1    2.6   2.560   0.543  0.463
+Residuals 73  344.1   4.714               
+
+Error: spider
+       Df  Sum Sq Mean Sq
+spider  1 0.01909 0.01909
+
+Error: id:stage
+            Df Sum Sq Mean Sq F value Pr(>F)
+stage        1   0.22  0.2218   0.383  0.538
+group:stage  1   0.77  0.7698   1.331  0.252
+Residuals   73  42.23  0.5785               
+
+Error: id:spider
+             Df Sum Sq Mean Sq F value Pr(>F)  
+group:spider  1   1.59   1.591   3.592  0.062 .
+Residuals    73  32.34   0.443                 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: id:stage:spider
+                   Df Sum Sq Mean Sq F value  Pr(>F)   
+stage:spider        1  21.77  21.767   8.204 0.00545 **
+group:stage:spider  1   3.01   3.007   1.133 0.29054   
+Residuals          73 193.68   2.653                   
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: Within
+            Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 2100  619.6   0.295               
+
+Error: id
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 19  82.92   4.364               
+
+Error: spider
+       Df Sum Sq Mean Sq
+spider  1  1.018   1.018
+
+Error: id:stage
+          Df Sum Sq Mean Sq F value Pr(>F)
+stage      1  0.258  0.2582   0.655  0.429
+Residuals 19  7.495  0.3945               
+
+Error: id:spider
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 19  12.71  0.6688               
+
+Error: id:stage:spider
+             Df Sum Sq Mean Sq F value Pr(>F)  
+stage:spider  1  15.17  15.165   5.441 0.0308 *
+Residuals    19  52.96   2.787                 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: Within
+           Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 560  178.2  0.3182               
+
+Error: id
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 54  261.2   4.836               
+
+Error: spider
+       Df Sum Sq Mean Sq
+spider  1 0.5925  0.5925
+
+Error: id:stage
+          Df Sum Sq Mean Sq F value Pr(>F)
+stage      1   0.73  0.7334    1.14   0.29
+Residuals 54  34.73  0.6432               
+
+Error: id:spider
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 54  19.63  0.3636               
+
+Error: id:stage:spider
+             Df Sum Sq Mean Sq F value Pr(>F)  
+stage:spider  1   9.61   9.609   3.687 0.0601 .
+Residuals    54 140.72   2.606                 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: Within
+            Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 1540  441.4  0.2866               
+[1] "10%"
+10%Data: rs
+Models:
+m1a: outcome ~ ctrial + (1 + stage * spider | id) + group + stage + 
+m1a:     spider + group:stage + group:spider + stage:spider
+m1b: outcome ~ ctrial + (1 + stage * spider | id) + group * stage * 
+m1b:     spider
+    Df    AIC    BIC  logLik deviance  Chisq Chi Df Pr(>Chisq)
+m1a 19 3722.9 3829.8 -1842.5   3684.9                         
+m1b 20 3724.4 3836.9 -1842.2   3684.4 0.5038      1     0.4778
+  Group Threshold Estimate   SE DF CI.lower CI.upper    t     P
+1  nCFS       10%     0.62 0.27 62     0.07     1.16 2.27 0.027
+2  wCFS       10%     0.39 0.18 62     0.02     0.75 2.11 0.039
+
+Error: id
+          Df Sum Sq Mean Sq F value Pr(>F)
+group      1   0.84   0.842   0.181  0.672
+Residuals 62 287.75   4.641               
+
+Error: spider
+       Df   Sum Sq  Mean Sq
+spider  1 0.001553 0.001553
+
+Error: id:stage
+            Df Sum Sq Mean Sq F value Pr(>F)
+stage        1   0.16  0.1613   0.257  0.614
+group:stage  1   0.78  0.7807   1.244  0.269
+Residuals   62  38.90  0.6274               
+
+Error: id:spider
+             Df Sum Sq Mean Sq F value Pr(>F)  
+group:spider  1  1.546  1.5459   3.402 0.0699 .
+Residuals    62 28.170  0.4544                 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: id:stage:spider
+                   Df Sum Sq Mean Sq F value  Pr(>F)   
+stage:spider        1  26.88  26.884   9.133 0.00365 **
+group:stage:spider  1   1.44   1.442   0.490 0.48655   
+Residuals          62 182.50   2.944                   
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: Within
+            Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 1792  539.4   0.301               
+
+Error: id
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 19  82.92   4.364               
+
+Error: spider
+       Df Sum Sq Mean Sq
+spider  1  1.018   1.018
+
+Error: id:stage
+          Df Sum Sq Mean Sq F value Pr(>F)
+stage      1  0.258  0.2582   0.655  0.429
+Residuals 19  7.495  0.3945               
+
+Error: id:spider
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 19  12.71  0.6688               
+
+Error: id:stage:spider
+             Df Sum Sq Mean Sq F value Pr(>F)  
+stage:spider  1  15.17  15.165   5.441 0.0308 *
+Residuals    19  52.96   2.787                 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: Within
+           Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 560  178.2  0.3182               
+
+Error: id
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 43  204.8   4.763               
+
+Error: spider
+       Df Sum Sq Mean Sq
+spider  1 0.5296  0.5296
+
+Error: id:stage
+          Df Sum Sq Mean Sq F value Pr(>F)
+stage      1  0.684  0.6838   0.936  0.339
+Residuals 43 31.405  0.7303               
+
+Error: id:spider
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 43  15.46  0.3596               
+
+Error: id:stage:spider
+             Df Sum Sq Mean Sq F value Pr(>F)  
+stage:spider  1  13.16  13.161   4.369 0.0426 *
+Residuals    43 129.55   3.013                 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: Within
+            Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 1232  361.2  0.2932               
+[1] "0%"
+0%Data: rs
+Models:
+m1a: outcome ~ ctrial + (1 + stage * spider | id) + group + stage + 
+m1a:     spider + group:stage + group:spider + stage:spider
+m1b: outcome ~ ctrial + (1 + stage * spider | id) + group * stage * 
+m1b:     spider
+    Df    AIC    BIC  logLik deviance Chisq Chi Df Pr(>Chisq)
+m1a 19 2579.7 2678.6 -1270.9   2541.7                        
+m1b 20 2581.7 2685.8 -1270.9   2541.7 5e-04      1     0.9824
+  Group Threshold Estimate   SE DF CI.lower CI.upper    t     P
+1  nCFS        0%     0.62 0.32 40    -0.02     1.26 1.94 0.059
+2  wCFS        0%     0.63 0.30 40     0.01     1.24 2.07 0.045
+
+Error: id
+          Df Sum Sq Mean Sq F value Pr(>F)
+group      1   0.61   0.612   0.107  0.745
+Residuals 40 228.81   5.720               
+
+Error: spider
+       Df  Sum Sq Mean Sq
+spider  1 0.04993 0.04993
+
+Error: id:stage
+            Df Sum Sq Mean Sq F value Pr(>F)
+stage        1  0.309  0.3086   0.455  0.504
+group:stage  1  1.517  1.5172   2.236  0.143
+Residuals   40 27.138  0.6785               
+
+Error: id:spider
+             Df Sum Sq Mean Sq F value Pr(>F)  
+group:spider  1  2.583   2.583     4.9 0.0326 *
+Residuals    40 21.080   0.527                 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: id:stage:spider
+                   Df Sum Sq Mean Sq F value  Pr(>F)   
+stage:spider        1  32.36   32.36   8.067 0.00706 **
+group:stage:spider  1   0.00    0.00   0.000 0.98291   
+Residuals          40 160.46    4.01                   
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: Within
+            Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 1176  387.7  0.3296               
+
+Error: id
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 19  82.92   4.364               
+
+Error: spider
+       Df Sum Sq Mean Sq
+spider  1  1.018   1.018
+
+Error: id:stage
+          Df Sum Sq Mean Sq F value Pr(>F)
+stage      1  0.258  0.2582   0.655  0.429
+Residuals 19  7.495  0.3945               
+
+Error: id:spider
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 19  12.71  0.6688               
+
+Error: id:stage:spider
+             Df Sum Sq Mean Sq F value Pr(>F)  
+stage:spider  1  15.17  15.165   5.441 0.0308 *
+Residuals    19  52.96   2.787                 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: Within
+           Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 560  178.2  0.3182               
+
+Error: id
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 21  145.9   6.947               
+
+Error: spider
+       Df Sum Sq Mean Sq
+spider  1  1.615   1.615
+
+Error: id:stage
+          Df Sum Sq Mean Sq F value Pr(>F)
+stage      1  1.568  1.5676   1.676   0.21
+Residuals 21 19.643  0.9354               
+
+Error: id:spider
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 21  8.373  0.3987               
+
+Error: id:stage:spider
+             Df Sum Sq Mean Sq F value Pr(>F)  
+stage:spider  1   17.2  17.197   3.359  0.081 .
+Residuals    21  107.5   5.119                 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: Within
+           Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 616  209.5  0.3401               
+[1] "0%*"
+0%*Data: rs
+Models:
+m1a: outcome ~ ctrial + (1 + stage * spider | id) + group + stage + 
+m1a:     spider + group:stage + group:spider + stage:spider
+m1b: outcome ~ ctrial + (1 + stage * spider | id) + group * stage * 
+m1b:     spider
+    Df    AIC    BIC  logLik deviance Chisq Chi Df Pr(>Chisq)
+m1a 19 2346.5 2443.0 -1154.3   2308.5                        
+m1b 20 2348.5 2450.1 -1154.3   2308.5 4e-04      1     0.9837
+  Group Threshold Estimate   SE DF CI.lower CI.upper    t     P
+1  nCFS       0%*     0.62 0.33 35    -0.06     1.29 1.86 0.072
+2  wCFS       0%*     0.63 0.36 35    -0.10     1.36 1.74 0.091
+
+Error: id
+          Df Sum Sq Mean Sq F value Pr(>F)
+group      1   3.14   3.144   0.534   0.47
+Residuals 35 206.09   5.888               
+
+Error: spider
+       Df  Sum Sq Mean Sq
+spider  1 0.00205 0.00205
+
+Error: id:stage
+            Df Sum Sq Mean Sq F value Pr(>F)
+stage        1  0.341  0.3407   0.451  0.506
+group:stage  1  1.912  1.9120   2.531  0.121
+Residuals   35 26.441  0.7555               
+
+Error: id:spider
+             Df Sum Sq Mean Sq F value Pr(>F)  
+group:spider  1  2.364  2.3639    3.97 0.0541 .
+Residuals    35 20.838  0.5954                 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: id:stage:spider
+                   Df Sum Sq Mean Sq F value Pr(>F)  
+stage:spider        1  28.47  28.465   6.476 0.0155 *
+group:stage:spider  1   0.00   0.002   0.000 0.9842  
+Residuals          35 153.84   4.395                 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: Within
+            Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 1036  361.1  0.3485               
+
+Error: id
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 19  82.92   4.364               
+
+Error: spider
+       Df Sum Sq Mean Sq
+spider  1  1.018   1.018
+
+Error: id:stage
+          Df Sum Sq Mean Sq F value Pr(>F)
+stage      1  0.258  0.2582   0.655  0.429
+Residuals 19  7.495  0.3945               
+
+Error: id:spider
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 19  12.71  0.6688               
+
+Error: id:stage:spider
+             Df Sum Sq Mean Sq F value Pr(>F)  
+stage:spider  1  15.17  15.165   5.441 0.0308 *
+Residuals    19  52.96   2.787                 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Error: Within
+           Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 560  178.2  0.3182               
+
+Error: id
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 16  123.2   7.698               
+
+Error: spider
+       Df Sum Sq Mean Sq
+spider  1  1.348   1.348
+
+Error: id:stage
+          Df Sum Sq Mean Sq F value Pr(>F)
+stage      1  1.994   1.994   1.684  0.213
+Residuals 16 18.946   1.184               
+
+Error: id:spider
+          Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 16   8.13  0.5081               
+
+Error: id:stage:spider
+             Df Sum Sq Mean Sq F value Pr(>F)
+stage:spider  1   13.3  13.301    2.11  0.166
+Residuals    16  100.9   6.305               
+
+Error: Within
+           Df Sum Sq Mean Sq F value Pr(>F)
+Residuals 476  182.9  0.3843               
+Warning messages:
+1: In aov(outcome ~ group * stage * spider + Error(id/stage * spider),  :
+  Error() model is singular
+2: In aov(outcome ~ stage * spider + Error(id/stage * spider), subset(rs,  :
+  Error() model is singular
+> mtext(outcomes[h], 2, 3, outer=TRUE, font=2, cex=1.4, las=3)
+> 
+> 
+> # also plot various scatter plots
+> covs <- c(10, 11, 15)
+> par(mar = c(3, 1, 0, 0), oma = c(1, 6, 2, 6))
+> lf <- layout(matrix(c(1:(6*nlevels(bt))), nlevels(bt), 6, byrow = TRUE))
+> #layout.show(lf)
+> for (g in 1:nlevels(bt)) {	
++   # assign groups
++   if (g == 1) rs <- subset(r)
++   else if (g == 2) rs <- subset(r, meanperc < .5 | group == "Aware")
++   else if (g == 3) rs <- subset(r, meanperc < .25 | group == "Aware")
++   else if (g == 4) rs <- subset(r, meanperc < .1 | group == "Aware")
++   else if (g == 5) rs <- subset(r, meanperc == 0 | group == "Aware")
++   else if (g == 6) rs <- subset(r, meanperc == 0 & hasproblem == FALSE |
++                                     r$group == "Aware")
++ 
++   for (i in 1:nlevels(rs$group)) {
++      pdm <- ddply(subset(rs,group==levels(rs$group)[i]), c("id","stage","spider"), summarise, m=mean(outcome,na.rm=TRUE)) 
++      pdm.s <- ddply(pdm, c("id","stage"), summarise, m=diff(m,na.rm=TRUE)) 
++      pdm.ss  <- ddply(pdm.s, c("id"), summarise, m=diff(m,na.rm=TRUE))
++      for (jj in 1:length(covs)) {
++         pdm.ss$revmean  <- pdm.ss$m
++         rs.m  <- merge(rs,pdm.ss,all=T)
++         rs.m <- subset(rs.m,trial==1&!is.na(revmean)&!is.na(rs.m[,covs[jj]]))
++         plot(rs.m[,covs[jj]],rs.m$revmean,xaxt="n",yaxt="n",ylim=c(-2,6),xlab="",ylab="",pch=19,cex=0.7)
++         axis(1,cex.axis=0.7)
++         if (jj %% 3 == 1 & i == 1)  {
++             axis(2,cex.axis=0.7)
++         }
++         if (g == nlevels(bt))  {
++             #axis(2,cex.axis=0.7)
++             #axis(1,cex.axis=0.7)
++             mtext(side=1,paste(toupper(colnames(rs.m)[covs[jj]])),line=2.4,cex=0.7,font=2)
++         }
++         if ((jj == 2 || jj == 5) && g == 1) {
++             mtext(paste(levels(rs$manipulation)[i],sep=""),3,0.75,font=2,cex=0.75,las=1)
++         }
++ 
++         # plot y2 axis for last column
++         if (i == 2 && jj == 3) {
++             #text(105,2,levels(bt)[g],font=2,cex=2,srt=-90,xpd=NA)
++             mtext(levels(bt)[g],4,4.5,font=2,adj=1)
++         }
++ 
++         lm  <- lm(rs.m$revmean ~ rs.m[,covs[jj]])
++         abline(lm,lwd=2)
++         rsq  <- round(summary(lm)$r.squared,3)
++         rr  <- round(sqrt(rsq),2)
++         cr  <- cor.test(rs.m[,covs[jj]],rs.m$revmean)
++         pv  <- round(cr$p.value,3)
++         ast <- ""
++         if (pv < 0.1) ast <- ""
++         if (pv < 0.05) ast <- "*"
++         if (pv < 0.01) ast <- "**"
++         if (pv < 0.001) ast <- "***"
++         rr  <- round(cr$estimate,2)
++         legend("topright",paste("r=", rr, ast, sep = ""), bty = "n")
++         print(pv)
++      }
++  }
++  
++  # add main title
++  #mtext(paste(levels(bt)[g]),3,3,outer=T,font=2,cex=1.5,xpd=NA)
++ } 
+[1] 0.217
+[1] 0.257
+[1] 0.428
+[1] 0.018
+[1] 0.036
+[1] 0.124
+[1] 0.217
+[1] 0.257
+[1] 0.428
+[1] 0.027
+[1] 0.041
+[1] 0.098
+[1] 0.217
+[1] 0.257
+[1] 0.428
+[1] 0.039
+[1] 0.016
+[1] 0.009
+[1] 0.217
+[1] 0.257
+[1] 0.428
+[1] 0.058
+[1] 0.012
+[1] 0.018
+[1] 0.217
+[1] 0.257
+[1] 0.428
+[1] 0.201
+[1] 0.044
+[1] 0.218
+[1] 0.217
+[1] 0.257
+[1] 0.428
+[1] 0.298
+[1] 0.093
+[1] 0.362
+> mtext("Reversal Learning (units)",2,2,outer=TRUE,font=2,cex=1.4,las=3)
+> dev.off()
+null device 
+          1 
+> 
+> proc.time()
+   user  system elapsed 
+ 57.995   0.633  60.406 

@@ -1,0 +1,344 @@
+
+R version 3.3.1 (2016-06-21) -- "Bug in Your Hair"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-apple-darwin13.4.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> #
+> # CFS descriptives
+> # This is the title page of the figure package
+> # Also, we want this to return the interesting numbers in a decent, i.e., a table
+> #
+> # 12/7/16, PH
+> 
+> citation('lmerTest')
+
+To cite package ‘lmerTest’ in publications use:
+
+  Alexandra Kuznetsova, Per Bruun Brockhoff and Rune Haubo Bojesen
+  Christensen (2016). lmerTest: Tests in Linear Mixed Effects Models. R
+  package version 2.0-33. https://CRAN.R-project.org/package=lmerTest
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {lmerTest: Tests in Linear Mixed Effects Models},
+    author = {Alexandra Kuznetsova and Per {Bruun Brockhoff} and Rune {Haubo Bojesen Christensen}},
+    year = {2016},
+    note = {R package version 2.0-33},
+    url = {https://CRAN.R-project.org/package=lmerTest},
+  }
+
+> 
+> rm(list=ls()) 
+> library('lattice')
+> 
+> # install.packages('lmerTest')
+> 
+> # subset at trial == 1
+> c <- read.csv("../data/cfs.csv")
+> c <- subset(c, trial==1)
+> 
+> # open figure as pdf with equal file name
+> pdf("../output/figures/cfs_1_start.pdf")
+> 
+> # 3 rows, 4, columns to fit nicely on title page
+> par(cex.main=1.0,cex.axis=1.0,las=1,lwd=1.0,mar=c(3,2,4,2),oma=c(6,6,9,6))
+> nf <- layout(matrix(c(1,2,2,3,4,5,6,7,8,9,10,11),3,4,byrow=T))
+> #layout.show(nf)
+> 
+> plot.new()
+> group.freq  <- table(c$group)
+> nums <- c(length(c$group[c$group==""]), length(c$group[c$group=="Aware"]), length(c$group[c$group=="Unaware"]))
+> b <- barplot(group.freq,main="Group",names=c("Miss","Aware","Unaware"),ylim=c(0,max(nums)*1.2))
+> text(x=b,y=nums,label=nums,cex=0.7,pos=3,col="red")
+> plot.new()
+> 
+> # create data frame to serve as final table
+> df.all <- data.frame(Dummy=NA)
+> 
+> # from here by group
+> # remove level missing group first
+> c <- subset(c,!group=="")
+> c$group <- factor(c$group)
+> for (i in 1:nlevels(c$group)) {
++   cc <- subset(c,group==levels(c$group)[i])
++ 
++   # create df for table data
++   df <- data.frame(Var1=NA,Freq=NA,Group=NA,Characteristic=NA)
++ 
++   # tabularize gender
++   gender.freq  <- table(cc$gender)
++ 
++   nums <- c(length(cc$gender[cc$gender==""]), length(cc$gender[cc$gender=="F"]), length(cc$gender[cc$gender=="M"]))
++   barplot(gender.freq,main="Gender",names=c("Miss","F","M"),ylim=c(0,108),cex.names=0.85,las=1)
++   text(x=b,y=nums,label=nums,cex=0.7,pos=3,col="red")
++   #print(nums)
++ 
++   # sum up in dataframe
++   df.gender <- as.data.frame(gender.freq)
++   df.gender$Group <- levels(c$group)[i]
++   df.gender$Characteristic <- "Gender"
++   df <- rbind(df,df.gender)
++ 
++   # tabularize age
++   am <- paste(min(cc$age,na.rm=T), "-", max(cc$age,na.rm=T),sep="")
++ 	#am <- "OK"
++   cc$agef[!is.na(cc$age)] <- am
++   cc$agef[is.na(cc$age)] <- "Miss" 
++   cc$agef <- factor(cc$agef, levels=c("Miss",am))
++   age.freq  <- table(cc$agef)
++ 
++   nums <- c(length(cc$agef[cc$agef=="Miss"]), length(cc$agef[cc$agef==am]))
++   barplot(age.freq,main="Age",cex.names=0.85,ylim=c(0,108),las=1)
++   text(x=b,y=nums,label=nums,cex=0.7,pos=3,col="red")
++ 
++   # sum up in dataframe
++   df.age <- as.data.frame(age.freq)
++   df.age$Group <- levels(c$group)[i]
++   df.age$Characteristic <- "Age"
++   df <- rbind(df,df.age)
++ 
++   # tabularize missing dcm
++   cc$dcm2f[!is.na(cc$dcm2)] <- "OK" 
++   cc$dcm2f[is.na(cc$dcm2)] <- "Miss" 
++   dcm2.freq  <- table(cc$dcm2f)
++ 	nums <- c(length(cc$dcm2f[cc$dcm2f=="Miss"]), length(cc$dcm2f[cc$dcm2f=="OK"]))
++   barplot(dcm2.freq,main="SCR",cex.names=0.85,ylim=c(0,108),las=1)
++   text(x=b,y=nums,label=nums,cex=0.7,pos=3,col="red")
++ 
++   # sum up in dataframe
++   df.scr <- as.data.frame(dcm2.freq)
++   df.scr$Characteristic <- "SCR"
++   df.scr$Group <- levels(c$group)[i]
++   df <- rbind(df,df.scr)
++ 
++   # tabularize missing eprime 
++   cc$sf[!cc$sessiondate==""] <- "OK" 
++   cc$sf[cc$sessiondate==""] <- "Miss" 
++   sf.freq  <- table(cc$sf)
++   nums <- c(length(cc$sf[cc$sf=="Miss"]), length(cc$sf[cc$sf=="OK"]))
++   barplot(sf.freq,main="Eprime",cex.names=0.85,ylim=c(0,108),las=1)
++   text(x=b,y=nums,label=nums,cex=0.7,pos=3,col="red")
++ 
++   # sum up in dataframe
++   df.eprime <- as.data.frame(sf.freq)
++   df.eprime$Characteristic <- "E-Prime"
++   df.eprime$Group <- levels(c$group)[i]
++   df <- rbind(df,df.eprime)
++ 
++   # add group label
++   text(3.1,75,labels=paste(levels(cc$group)[i]),font=2,cex=1.25,srt = -90,xpd=T)
++ 
++   # bind df
++   df.all <- cbind(df.all,df)
++ }
+> mtext("Frequency",2,2,outer=T,font=2,cex=2,las=3)
+> mtext("Overview CFS Data",3,2,outer=T,font=2,cex=3)
+> 
+> dev.off()
+null device 
+          1 
+> 
+> # rework data frame and save where it belongs
+> cols <- c(5,4,2,3,8,6,7)
+> df.all <- df.all[c(2:11),cols]
+> #write.csv(df.all, "../output/tables/cfs_1_start.csv",row.names=F)
+> #df.all
+> 
+> # create data frame for covariates at baseline
+> c <- subset(c,trial==1&!group=="")
+> covs <- c("Age","STAIT","STAIS","FSQ","Meanresp","Meanconf","Meanperc")
+> df <- data.frame(matrix(ncol=9,nrow=length(covs)+2))
+> colnames(df) <- c("Characteristic","NoCFSN","NoCFSMean","NoCFSSD","CFSN",
++                   "CFSMean","CFSSD","Stat","P")
+> 
+> m <- NA
+> 
+> # add gender
+> p <- subset(c,group=="Aware"&gender=="M"&trial==1)
+> df$Characteristic[1] <- "Males"
+> df$NoCFSN[1] <- length(p$id)
+> m[1] <- length(p$id)
+> p <- subset(c,group=="Aware"&gender=="F"&trial==1)
+> df$Characteristic[2] <- "Females"
+> df$NoCFSN[2] <- length(p$id)
+> m[2] <- length(p$id)
+> p <- subset(c,group=="Unaware"&gender=="M"&trial==1)
+> df$CFSN[1] <- length(p$id)
+> m[3] <- length(p$id)
+> p <- subset(c,group=="Unaware"&gender=="F"&trial==1)
+> df$CFSN[2] <- length(p$id)
+> m[4] <- length(p$id)
+> cq <- chisq.test(matrix(c(m),2,2,byrow=T))
+> df$Stat[1] <- round(cq$statistic,1)
+> df$P[1] <- round(cq$p.value,2)
+> df$Stat[2] <- round(cq$statistic,1)
+> df$P[2] <- round(cq$p.value,2)
+> 
+> # loop over numeric covariates
+> for (i in 1:length(covs)) {
++   df$Characteristic[i+2] <- covs[i] 
++   p <- subset(c,group=="Aware")
++   df$NoCFSN[i+2] <- length(p[complete.cases(p[,tolower(covs[i])]),tolower(covs[i])])
++   df$NoCFSMean[i+2] <- round(mean(p[complete.cases(p[,tolower(covs[i])]),tolower(covs[i])]),1)
++   df$NoCFSSD[i+2] <- round(sd(p[complete.cases(p[,tolower(covs[i])]),tolower(covs[i])]),1)
++   p <- subset(c,group=="Unaware")
++   df$CFSN[i+2] <- length(p[complete.cases(p[,tolower(covs[i])]),tolower(covs[i])])
++   df$CFSMean[i+2] <- round(mean(p[complete.cases(p[,tolower(covs[i])]),tolower(covs[i])]),1)
++   df$CFSSD[i+2] <- round(sd(p[complete.cases(p[,tolower(covs[i])]),tolower(covs[i])]),1)
++   t <- t.test(c[,tolower(covs[i])] ~ c$group)
++   str(t) 
++   df$Stat[i+2] <- round(t$statistic,1)
++   df$P[i+2] <- round(t$p.value,2)
++ }
+List of 9
+ $ statistic  : Named num 0.217
+  ..- attr(*, "names")= chr "t"
+ $ parameter  : Named num 24.5
+  ..- attr(*, "names")= chr "df"
+ $ p.value    : num 0.83
+ $ conf.int   : atomic [1:2] -4.59 5.66
+  ..- attr(*, "conf.level")= num 0.95
+ $ estimate   : Named num [1:2] 30.1 29.5
+  ..- attr(*, "names")= chr [1:2] "mean in group Aware" "mean in group Unaware"
+ $ null.value : Named num 0
+  ..- attr(*, "names")= chr "difference in means"
+ $ alternative: chr "two.sided"
+ $ method     : chr "Welch Two Sample t-test"
+ $ data.name  : chr "c[, tolower(covs[i])] by c$group"
+ - attr(*, "class")= chr "htest"
+List of 9
+ $ statistic  : Named num 0.534
+  ..- attr(*, "names")= chr "t"
+ $ parameter  : Named num 14.1
+  ..- attr(*, "names")= chr "df"
+ $ p.value    : num 0.601
+ $ conf.int   : atomic [1:2] -5.95 9.9
+  ..- attr(*, "conf.level")= num 0.95
+ $ estimate   : Named num [1:2] 36 34
+  ..- attr(*, "names")= chr [1:2] "mean in group Aware" "mean in group Unaware"
+ $ null.value : Named num 0
+  ..- attr(*, "names")= chr "difference in means"
+ $ alternative: chr "two.sided"
+ $ method     : chr "Welch Two Sample t-test"
+ $ data.name  : chr "c[, tolower(covs[i])] by c$group"
+ - attr(*, "class")= chr "htest"
+List of 9
+ $ statistic  : Named num 0.535
+  ..- attr(*, "names")= chr "t"
+ $ parameter  : Named num 14.7
+  ..- attr(*, "names")= chr "df"
+ $ p.value    : num 0.601
+ $ conf.int   : atomic [1:2] -4.82 8.04
+  ..- attr(*, "conf.level")= num 0.95
+ $ estimate   : Named num [1:2] 30.7 29.1
+  ..- attr(*, "names")= chr [1:2] "mean in group Aware" "mean in group Unaware"
+ $ null.value : Named num 0
+  ..- attr(*, "names")= chr "difference in means"
+ $ alternative: chr "two.sided"
+ $ method     : chr "Welch Two Sample t-test"
+ $ data.name  : chr "c[, tolower(covs[i])] by c$group"
+ - attr(*, "class")= chr "htest"
+List of 9
+ $ statistic  : Named num 0.162
+  ..- attr(*, "names")= chr "t"
+ $ parameter  : Named num 16.9
+  ..- attr(*, "names")= chr "df"
+ $ p.value    : num 0.873
+ $ conf.int   : atomic [1:2] -12.3 14.3
+  ..- attr(*, "conf.level")= num 0.95
+ $ estimate   : Named num [1:2] 43.6 42.6
+  ..- attr(*, "names")= chr [1:2] "mean in group Aware" "mean in group Unaware"
+ $ null.value : Named num 0
+  ..- attr(*, "names")= chr "difference in means"
+ $ alternative: chr "two.sided"
+ $ method     : chr "Welch Two Sample t-test"
+ $ data.name  : chr "c[, tolower(covs[i])] by c$group"
+ - attr(*, "class")= chr "htest"
+List of 9
+ $ statistic  : Named num 4.78
+  ..- attr(*, "names")= chr "t"
+ $ parameter  : Named num 21.8
+  ..- attr(*, "names")= chr "df"
+ $ p.value    : num 9.14e-05
+ $ conf.int   : atomic [1:2] 0.194 0.492
+  ..- attr(*, "conf.level")= num 0.95
+ $ estimate   : Named num [1:2] 1.8 1.46
+  ..- attr(*, "names")= chr [1:2] "mean in group Aware" "mean in group Unaware"
+ $ null.value : Named num 0
+  ..- attr(*, "names")= chr "difference in means"
+ $ alternative: chr "two.sided"
+ $ method     : chr "Welch Two Sample t-test"
+ $ data.name  : chr "c[, tolower(covs[i])] by c$group"
+ - attr(*, "class")= chr "htest"
+List of 9
+ $ statistic  : Named num 5.91
+  ..- attr(*, "names")= chr "t"
+ $ parameter  : Named num 23.1
+  ..- attr(*, "names")= chr "df"
+ $ p.value    : num 4.88e-06
+ $ conf.int   : atomic [1:2] 0.588 1.221
+  ..- attr(*, "conf.level")= num 0.95
+ $ estimate   : Named num [1:2] 2.64 1.73
+  ..- attr(*, "names")= chr [1:2] "mean in group Aware" "mean in group Unaware"
+ $ null.value : Named num 0
+  ..- attr(*, "names")= chr "difference in means"
+ $ alternative: chr "two.sided"
+ $ method     : chr "Welch Two Sample t-test"
+ $ data.name  : chr "c[, tolower(covs[i])] by c$group"
+ - attr(*, "class")= chr "htest"
+List of 9
+ $ statistic  : Named num 20.3
+  ..- attr(*, "names")= chr "t"
+ $ parameter  : Named num 88
+  ..- attr(*, "names")= chr "df"
+ $ p.value    : num 4.92e-35
+ $ conf.int   : atomic [1:2] 0.653 0.795
+  ..- attr(*, "conf.level")= num 0.95
+ $ estimate   : Named num [1:2] 1 0.276
+  ..- attr(*, "names")= chr [1:2] "mean in group Aware" "mean in group Unaware"
+ $ null.value : Named num 0
+  ..- attr(*, "names")= chr "difference in means"
+ $ alternative: chr "two.sided"
+ $ method     : chr "Welch Two Sample t-test"
+ $ data.name  : chr "c[, tolower(covs[i])] by c$group"
+ - attr(*, "class")= chr "htest"
+> df
+  Characteristic NoCFSN NoCFSMean NoCFSSD CFSN CFSMean CFSSD Stat    P
+1          Males      7        NA      NA   39      NA    NA  0.1 0.75
+2        Females     13        NA      NA   54      NA    NA  0.1 0.75
+3            Age     20      30.1    10.4   92    29.5   8.3  0.2 0.83
+4          STAIT     13      36.0    12.8   84    34.0   9.5  0.5 0.60
+5          STAIS     13      30.7    10.3   84    29.1   8.6  0.5 0.60
+6            FSQ     14      43.6    22.0   83    42.6  20.2  0.2 0.87
+7       Meanresp     16       1.8     0.3   90     1.5   0.3  4.8 0.00
+8       Meanconf     16       2.6     0.5   90     1.7   0.6  5.9 0.00
+9       Meanperc     22       1.0     0.0   89     0.3   0.3 20.3 0.00
+> 
+> 
+> # adapt header and first column
+> colnames(df) <- c("Characteristic","nCFS","Mean","SD","wCFS","Mean ","SD ","Stat","P")
+> df$Characteristic <- c("Males","Females","Age","STAI-T","STAI-S","FSQ","Response","Confidence","Awareness")
+> 
+> # write the data frame to disk
+> write.csv(df, "../output/tables/cfs_1_start.csv",row.names=F,na="")
+> 
+> proc.time()
+   user  system elapsed 
+  2.393   0.112   2.502 
