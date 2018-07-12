@@ -71,14 +71,14 @@ This project is licensed under the MIT License - see the
 We thank Patrik Vuilleumier who created and shared the spider
 stimuli. This work was supported in part through the computational
 resources and staff expertise provided by Scientific Computing at the
-Icahn School of Medicine at Mount Sinai.  Funding was provided by NIMH
+Icahn School of Medicine at Mount Sinai. Funding was provided by NIMH
 grant MH105515 and a Klingenstein-Simons Fellowship Award in the
-Neurosciences to D.S.; ERC Advanced Grant XSPECT-DLV-692739 to D.C.
-(Co-I); and Swiss National Science Foundation grant SNF 161077 to
-P.H. The funding source had no role in the design and conduct of the
-study; collection, management, analysis, and interpretation of the data;
-preparation, review, or approval of the manuscript; and decision to
-submit the manuscript for publication.
+Neurosciences to Daniela Schiller.; ERC Advanced Grant XSPECT-DLV-692739
+to David Carmel (Co-I); and Swiss National Science Foundation grant SNF
+161077 to Philipp Homan. The funding source had no role in the design
+and conduct of the study; collection, management, analysis, and
+interpretation of the data; preparation, review, or approval of the
+manuscript; and decision to submit the manuscript for publication.
 
 # Built With
 Org-mode 9.1.9.
