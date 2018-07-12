@@ -73,64 +73,7 @@ function out = cfs_phtdindiv(y, hybrid, lowerb, upperb, Xinit, fname);
 % suggests that one thing worthing trying is to use a prior instead of a
 % hard constraint, i.e., using the population summary statistics (mean
 % and variance) of the sample from which the subject was drawn as prior.
-%
-% ----------------------------------------------------------------------
-% Dear Ifat, 
-%
-% It’s great to hear from you and congratulations on finishing
-% collecting all the PTSD data (huge amount of work and I can only
-% imagine)!
-%
-% As for your question: 
-%  
-% 1. I attached the data file that Daniela had when she prepared the
-% model fitting data format, so similar format would be good.
-%
-% 2. As for behavioural fittings, individual fitting is better than the
-% group one since it can account for more individual variance in their
-% physiological (SCR) data but in terms of imaging analysis, it would be
-% better to adopt a group fitting approach and apply the group parameter
-% to each individual to generate the associability regressor
-% etc. Nathaniel has written explicitly about it (see attachment page
-% 11) and it’s mainly because either individual fit might be too noisy
-% or different individual parameter might scale the predictor
-% differentially such that it inflates the variability in the regression
-% weights. A more appropriate approach, however, is the bayesian
-% hierarchical model (Behrens et al., 2007, Ide et al., 2013) but it
-% usually requires a lot of computational twitch to make it work.
-%  
-% 3. In fact, Lauren Atlas in her recent eLife paper tried just that by
-% assuming that there is a anti-correlation between CS+ and CS- but in
-% her task design, the reversal happened several times which should be
-% enough for subjects to consciously/unconsciously form a “model-based”
-% model that CS+ and CS- always switch signs in the task. You can
-% certainly take a similar approach by adding additional parameter in
-% the model and see whether such a model can beat the simpler one using
-% AIC/BIC or even likelihood ratio test.
-%
-% 4. Of another note, Candace and Liz recently did an experiment where
-% they induced acute stress in some of the subjects who were about to go
-% through the reversal phase of the fear conditioning task and found
-% that stress made people less sensible to adapt to the reversal phase
-% than the control subjects. They showed that stress might desensitise
-% subject’s capability to incorporate stimulus history to update their
-% associability (learning rate) which in turn makes these subjects
-% slower in terms of adapting to the new environment. In a sense, that
-% would be my first guess that PTSD, compared to the control subjects,
-% might show less flexibility in incorporating environmental stimulus to
-% adjust their own learning rate in an uncertain world.
-%
-% Best, Jian
-% ----------------------------------------------------------------------
-% After meeting with Jian, 2/2/17: 
-% -Take a close look at the raw data 
-% -Plot it in all different kind of ways 
-% -Decide on a case by case basis which subjects to potentially exclude
-% -Histograms
-% -Inverse Hessian could be used to do group comparisons based on
-% group estimates
-%
-% 
+%-----------------------------------------------------------------------
 % Original version by Jian Li
 % Modified by PH, 1/2017
   
